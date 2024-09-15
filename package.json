@@ -2,6 +2,8 @@
   "name": "@hank.chat/types",
   "version": "0.1.5",
   "description": "Types for Hank",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "files": [
     "dist"
   ],
@@ -31,5 +33,12 @@
   },
   "exports": {
     "./*": "./dist/*"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/*"
+      ]
+    }
   }
 }
