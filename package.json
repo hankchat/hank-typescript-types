@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "files": [
-    "dist"
+    "dist/**/*.d.ts"
   ],
   "scripts": {
     "build": "tsup"
@@ -30,16 +30,5 @@
     "ts-proto": "^2.2.0",
     "tsup": "^8.2.4",
     "typescript": "^5.6.2"
-  },
-  "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*"
-  },
-  "typesVersions": {
-    "*": {
-      "*": [
-        "dist/*"
-      ]
-    }
   }
 }
