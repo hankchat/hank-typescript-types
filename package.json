@@ -1,6 +1,6 @@
 {
   "name": "@hank.chat/types",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Types for Hank",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
