@@ -1,0 +1,34 @@
+{
+  "name": "@hank.chat/types",
+  "version": "0.1.0",
+  "description": "Types for Hank",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hankchat/hank-typescript-types.git"
+  },
+  "keywords": [
+    "hank",
+    "chat",
+    "bot",
+    "types"
+  ],
+  "author": "Marc Addeo (https://hank.chat/)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hankchat/hank-typescript-types/issues"
+  },
+  "homepage": "https://github.com/hankchat/hank-typescript-types#readme",
+  "devDependencies": {
+    "ts-proto": "^2.2.0",
+    "tsup": "^8.2.4",
+    "typescript": "^5.6.2"
+  }
+}
