@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-	entry: ["src/hank.ts"],
+	entry: ["src/**/*.ts"],
 	format: ["cjs", "esm"],
 	dts: true,
 	splitting: false,
