@@ -21,7 +21,6 @@ types:
     protoc --proto_path=protos \
         --plugin=node_modules/.bin/protoc-gen-ts_proto \
         --ts_proto_opt=env=node \
-        --ts_proto_opt=outputIndex=true \
         --ts_proto_out=src \
         {{ protos }}
     perl -p -i -e 's/interface Rpc/export interface Rpc/' src/hank.ts

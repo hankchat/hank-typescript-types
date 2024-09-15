@@ -15,6 +15,8 @@ import { ReactOutput } from "./io/react_output";
 import { SendMessageInput } from "./io/send_message_input";
 import { SendMessageOutput } from "./io/send_message_output";
 
+export const protobufPackage = "hank";
+
 export interface Hank {
   send_message(request: SendMessageInput): Promise<SendMessageOutput>;
   react(request: ReactInput): Promise<ReactOutput>;
