@@ -20,6 +20,7 @@ types:
     rm -rf src/*
     protoc --proto_path=protos \
         --plugin=node_modules/.bin/protoc-gen-ts_proto \
+        --ts_proto_opt=exportCommonSymbols=false \
         --ts_proto_opt=env=node \
         --ts_proto_out=src \
         {{ protos }}
