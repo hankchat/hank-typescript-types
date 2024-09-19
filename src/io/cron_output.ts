@@ -7,6 +7,7 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
+/** [Internal] Output from a cron request to Hank. */
 export interface CronOutput {
 }
 

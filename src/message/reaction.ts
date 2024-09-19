@@ -8,8 +8,13 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Message } from "./message";
 
+/** A reaction to a message. */
 export interface Reaction {
-  message: Message | undefined;
+  /** A message to react to. */
+  message:
+    | Message
+    | undefined;
+  /** A utf-8 emoji to react with. */
   emoji: string;
 }
 

@@ -8,7 +8,9 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { PreparedStatement } from "../database/prepared_statement";
 
+/** [Internal] Input to a db query request to Hank. */
 export interface DbQueryInput {
+  /** The prepared statement to send to Hank. */
   preparedStatement: PreparedStatement | undefined;
 }
 

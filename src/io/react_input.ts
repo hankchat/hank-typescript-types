@@ -8,7 +8,9 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Reaction } from "../message/reaction";
 
+/** [Internal] Input to a reaction request to Hank. */
 export interface ReactInput {
+  /** The reaction to send to Hank. */
   reaction: Reaction | undefined;
 }
 

@@ -7,8 +7,16 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
+/** A prepared statement to execute on the database. */
 export interface PreparedStatement {
+  /**
+   * The SQL query to execute, using ? for placeholders.
+   *
+   * Example:
+   *  SELECT * FROM table WHERE id = ?
+   */
   sql: string;
+  /** An array of values to substitute each ? placeholder in the SQL query with. */
   values: string[];
 }
 

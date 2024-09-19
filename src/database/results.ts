@@ -7,7 +7,9 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
+/** Database Query Results. */
 export interface Results {
+  /** An array of JSON strings. */
   rows: string[];
 }
 

@@ -15,10 +15,15 @@ import { ReactOutput } from "./io/react_output";
 import { SendMessageInput } from "./io/send_message_input";
 import { SendMessageOutput } from "./io/send_message_output";
 
+/** The underlying core Hank service. Should only be used by internal code. */
 export interface Hank {
+  /** Send a chat message to Hank. */
   send_message(request: SendMessageInput): Promise<SendMessageOutput>;
+  /** Send a reaction to Hank. */
   react(request: ReactInput): Promise<ReactOutput>;
+  /** Send a database query to hank. */
   db_query(request: DbQueryInput): Promise<DbQueryOutput>;
+  /** Send a cron job to hank. */
   cron(request: CronInput): Promise<CronOutput>;
 }
 

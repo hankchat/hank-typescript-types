@@ -8,7 +8,9 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Message } from "../message/message";
 
+/** [Internal] Input to a send message request to Hank. */
 export interface SendMessageInput {
+  /** The message to send to Hank. */
   message: Message | undefined;
 }
 

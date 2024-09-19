@@ -8,7 +8,9 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { CronJob } from "../cron/cron_job";
 
+/** [Internal] Input to a cron request to Hank. */
 export interface CronInput {
+  /** A cronjob to send to Hank. */
   cronJob: CronJob | undefined;
 }
 

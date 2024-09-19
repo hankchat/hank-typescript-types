@@ -8,7 +8,9 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Results } from "../database/results";
 
+/** [Internal] Output from a db query request to Hank. */
 export interface DbQueryOutput {
+  /** The database results from the query from Hank. */
   results: Results | undefined;
 }
 

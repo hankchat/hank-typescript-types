@@ -7,11 +7,17 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
+/** A chat message. */
 export interface Message {
+  /** The channel id the message is from/to. */
   channelId: string;
+  /** The id of the received message. */
   messageId: string;
+  /** The id of the author of the message. */
   authorId: string;
+  /** The name of the author of the message. */
   authorName: string;
+  /** The content of the message. */
   content: string;
 }
 

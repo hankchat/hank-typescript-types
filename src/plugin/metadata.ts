@@ -7,10 +7,19 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
+/** Metadata for a plugin. */
 export interface Metadata {
+  /** The plguins name. */
   name: string;
+  /** A short description of the plugin. */
   description: string;
+  /**
+   * A version string for the plugin. Should follow semver.
+   *
+   * @see: https://semver.org/
+   */
   version: string;
+  /** When true, a SQLite3 database will be created for the plugin. */
   database: boolean;
 }
 

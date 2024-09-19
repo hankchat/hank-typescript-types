@@ -7,8 +7,18 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
+/** A cron job to run a task at a scheduled interval in the background. */
 export interface CronJob {
+  /**
+   * The cron schedule string to use for the cron job.
+   *
+   * Example (run every 5th minute):
+   *  * /5 * * * *
+   *
+   * @see: https://crontab.guru/
+   */
   cron: string;
+  /** A function name to call for each scheduled cron execution. */
   job: string;
 }
 
