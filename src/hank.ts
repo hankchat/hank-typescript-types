@@ -10,6 +10,8 @@ import { CronInput } from "./io/cron_input";
 import { CronOutput } from "./io/cron_output";
 import { DbQueryInput } from "./io/db_query_input";
 import { DbQueryOutput } from "./io/db_query_output";
+import { OneShotInput } from "./io/one_shot_input";
+import { OneShotOutput } from "./io/one_shot_output";
 import { ReactInput } from "./io/react_input";
 import { ReactOutput } from "./io/react_output";
 import { SendMessageInput } from "./io/send_message_input";
@@ -25,6 +27,8 @@ export interface Hank {
   db_query(request: DbQueryInput): Promise<DbQueryOutput>;
   /** Send a cron job to hank. */
   cron(request: CronInput): Promise<CronOutput>;
+  /** Send a one shot job to hank. */
+  one_shot(request: OneShotInput): Promise<OneShotOutput>;
 }
 
 export const HankServiceName = "hank.Hank";
@@ -38,6 +42,7 @@ export class HankClientImpl implements Hank {
     this.react = this.react.bind(this);
     this.db_query = this.db_query.bind(this);
     this.cron = this.cron.bind(this);
+    this.one_shot = this.one_shot.bind(this);
   }
   send_message(request: SendMessageInput): Promise<SendMessageOutput> {
     const data = SendMessageInput.encode(request).finish();
@@ -61,6 +66,12 @@ export class HankClientImpl implements Hank {
     const data = CronInput.encode(request).finish();
     const promise = this.rpc.request(this.service, "cron", data);
     return promise.then((data) => CronOutput.decode(new BinaryReader(data)));
+  }
+
+  one_shot(request: OneShotInput): Promise<OneShotOutput> {
+    const data = OneShotInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "one_shot", data);
+    return promise.then((data) => OneShotOutput.decode(new BinaryReader(data)));
   }
 }
 
