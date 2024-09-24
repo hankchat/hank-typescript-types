@@ -6,10 +6,7 @@
     "lib": [
       "es2020"
     ],
-    "strict": true,
-    "typeRoots": [
-      "./node_modules/@types"
-    ]
+    "strict": true
   },
   "include": [
     "src/**/*.ts"
