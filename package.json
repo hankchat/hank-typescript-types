@@ -6,7 +6,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rm -rf ./dist/ && node esbuild.js"
+    "build": "rm -rf ./dist/ && node esbuild.js && tsc --declaration --emitDeclarationOnly --outDir dist"
   },
   "repository": {
     "type": "git",
