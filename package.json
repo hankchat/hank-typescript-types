@@ -6,7 +6,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup"
+    "build": "rm -rf ./dist/ && node esbuild.js"
   },
   "repository": {
     "type": "git",
@@ -25,8 +25,8 @@
   },
   "homepage": "https://github.com/hankchat/hank-typescript-types#readme",
   "devDependencies": {
+    "esbuild": "^0.24.0",
     "ts-proto": "^2.2.0",
-    "tsup": "^8.2.4",
     "typescript": "^5.6.2"
   },
   "exports": "./dist/index.js",
