@@ -25,3 +25,8 @@ types:
         --ts_proto_out=src \
         {{ protos }}
     perl -p -i -e 's/interface Rpc/export interface Rpc/' src/hank.ts
+
+publish:
+    npm run build
+    npm version patch
+    npm publish
