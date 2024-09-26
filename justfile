@@ -17,6 +17,7 @@ alias e := edit
     $EDITOR "{{ justfile() }}"
 
 types protos="protos":
+    npm ci
     rm -rf src/*
     protos="$(find {{ protos }} -iname "*.proto" | xargs)" && \
     protoc --proto_path={{ protos }} \
