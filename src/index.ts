@@ -3,26 +3,6 @@ import { type AccessCheckChain as AccessCheckChainType, AccessCheckChain as Gene
 import { accessCheckOperatorFromJSON } from "./access_check/access_check_operator";
 
 // @@proto-exports-begin
-export * from "./access_check/access_check";
-export * from "./access_check/access_check_operator";
-export * from "./cron/cron_job";
-export * from "./cron/one_shot_job";
-export * from "./database/prepared_statement";
-export * from "./database/results";
-export * from "./io/cron_input";
-export * from "./io/cron_output";
-export * from "./io/one_shot_input";
-export * from "./io/one_shot_output";
-export * from "./io/db_query_input";
-export * from "./io/db_query_output";
-export * from "./io/react_input";
-export * from "./io/react_output";
-export * from "./io/send_message_input";
-export * from "./io/send_message_output";
-export * from "./message/message";
-export * from "./message/reaction";
-export * from "./plugin/metadata";
-export * from "./hank";
 // @@proto-exports-end
 
 // Override the json ser/de for AccessCheckChain to use our custom format.
