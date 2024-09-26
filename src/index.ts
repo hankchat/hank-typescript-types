@@ -2,7 +2,7 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { type AccessCheckChain as AccessCheckChainType, AccessCheckChain as GeneratedAccessCheckChain, AccessCheck } from "./access_check/access_check";
 import { accessCheckOperatorFromJSON } from "./access_check/access_check_operator";
 
-// @@proto-reexport-begin
+// @@proto-exports-begin
 export * from "./access_check/access_check";
 export * from "./access_check/access_check_operator";
 export * from "./cron/cron_job";
@@ -23,7 +23,7 @@ export * from "./message/message";
 export * from "./message/reaction";
 export * from "./plugin/metadata";
 export * from "./hank";
-// @@proto-reexport-end
+// @@proto-exports-end
 
 // Override the json ser/de for AccessCheckChain to use our custom format.
 export const AccessCheckChain: MessageFns<AccessCheckChainType> = {
