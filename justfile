@@ -19,6 +19,16 @@ clean:
     git reset --hard
     git clean -f .
 
+commit:
+    git add -u
+    git add src/
+    git commit -m "Add generated types"
+
+publish:
+    npm run build
+    npm version patch
+    npm publish
+
 types protos="protos":
     npm ci
     rm -rf src/*
@@ -36,8 +46,3 @@ types protos="protos":
     awk 'BEGIN {p=1} /^\/\/ @@proto-exports-begin/ { print; system("cat exports.txt"); p=0 } /^\/\/ @@proto-exports-end/ { p=1 } p' src/index.ts \
         > src/index.ts.tmp && mv src/index.ts{.tmp,}
     rm exports.txt
-
-publish:
-    npm run build
-    npm version patch
-    npm publish
