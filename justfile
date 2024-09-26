@@ -14,22 +14,24 @@ alias e := edit
 @edit:
     $EDITOR "{{ justfile() }}"
 
+build:
+    npm run build
+
 [confirm("Are you sure?")]
 clean:
     git reset --hard
     git clean -f .
 
-commit:
+commit: build
     git add -u
     git add src/
     git commit -m "Add generated types"
 
-publish:
-    npm run build
-    npm version patch
+publish version="patch": build
+    npm version {{ version }}
     npm publish
 
-types protos="protos":
+types protos="protos": && build
     npm ci
     rm -rf src/*
     protos="$(find {{ protos }} -iname "*.proto" | xargs)" && \
