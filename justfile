@@ -16,15 +16,16 @@ alias e := edit
 @edit:
     $EDITOR "{{ justfile() }}"
 
-types:
+types protos="protos":
     rm -rf src/*
-    protoc --proto_path=protos \
+    protos="$(find {{ protos }} -iname "*.proto" | xargs)" && \
+    protoc --proto_path={{ protos }} \
         --plugin=node_modules/.bin/protoc-gen-ts_proto \
         --ts_proto_opt=exportCommonSymbols=false \
         --ts_proto_opt=env=node \
         --ts_proto_opt=oneof=unions-value \
         --ts_proto_out=src \
-        {{ protos }}
+        $protos
     perl -p -i -e 's/interface Rpc/export interface Rpc/' src/hank.ts
     find src -type f -print | awk '{print length($0), $0}' | sort -n -r | cut -d ' ' -f2 | perl -p -e 's~src/(.*)\.ts~export * from "./$1";~' > exports.txt
     git checkout HEAD -- src/index.ts
