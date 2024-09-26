@@ -1,6 +1,4 @@
 chooser := "grep -v choose | fzf --tmux"
-protos := `find protos/* -iname "*.proto" | xargs`
-
 # Display this list of available commands
 @list:
     just --justfile "{{ source_file() }}" --list
@@ -15,6 +13,11 @@ alias e := edit
 # Edit the justfile
 @edit:
     $EDITOR "{{ justfile() }}"
+
+[confirm("Are you sure?")]
+clean:
+    git reset --hard
+    git clean -f .
 
 types protos="protos":
     npm ci
