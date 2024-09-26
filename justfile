@@ -22,9 +22,11 @@ types:
         --plugin=node_modules/.bin/protoc-gen-ts_proto \
         --ts_proto_opt=exportCommonSymbols=false \
         --ts_proto_opt=env=node \
+        --ts_proto_opt=oneof=unions-value \
         --ts_proto_out=src \
         {{ protos }}
     perl -p -i -e 's/interface Rpc/export interface Rpc/' src/hank.ts
+    git checkout HEAD -- src/index.ts
 
 publish:
     npm run build
