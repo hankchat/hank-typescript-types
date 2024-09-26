@@ -26,7 +26,11 @@ types:
         --ts_proto_out=src \
         {{ protos }}
     perl -p -i -e 's/interface Rpc/export interface Rpc/' src/hank.ts
+    find src -type f -print | awk '{print length($0), $0}' | sort -n -r | cut -d ' ' -f2 | perl -p -e 's~src/(.*)\.ts~export * from "./$1";~' > exports.txt
     git checkout HEAD -- src/index.ts
+    awk 'BEGIN {p=1} /^\/\/ @@proto-exports-begin/ { print; system("cat exports.txt"); p=0 } /^\/\/ @@proto-exports-end/ { p=1 } p' src/index.ts \
+        > src/index.ts.tmp && mv src/index.ts{.tmp,}
+    rm exports.txt
 
 publish:
     npm run build
