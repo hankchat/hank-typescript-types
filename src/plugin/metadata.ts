@@ -6,6 +6,7 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { AccessCheckChain } from "../access_check/access_check";
 
 /** Metadata for a plugin. */
 export interface Metadata {
@@ -19,12 +20,21 @@ export interface Metadata {
    * @see: https://semver.org/
    */
   version: string;
-  /** When true, a SQLite3 database will be created for the plugin. */
+  /**
+   * When true, a SQLite3 database will be created for the plugin.
+   * @deprecated All plugins get a database by default now.
+   */
   database: boolean;
+  /**
+   * Access checks
+   *
+   * All functionality of this plugin can optionally be gated by accses checks.
+   */
+  accessChecks: AccessCheckChain | undefined;
 }
 
 function createBaseMetadata(): Metadata {
-  return { name: "", description: "", version: "", database: false };
+  return { name: "", description: "", version: "", database: false, accessChecks: undefined };
 }
 
 export const Metadata: MessageFns<Metadata> = {
@@ -40,6 +50,9 @@ export const Metadata: MessageFns<Metadata> = {
     }
     if (message.database !== false) {
       writer.uint32(32).bool(message.database);
+    }
+    if (message.accessChecks !== undefined) {
+      AccessCheckChain.encode(message.accessChecks, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -79,6 +92,13 @@ export const Metadata: MessageFns<Metadata> = {
 
           message.database = reader.bool();
           continue;
+        case 5:
+          if (tag !== 42) {
+            break;
+          }
+
+          message.accessChecks = AccessCheckChain.decode(reader, reader.uint32());
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -94,6 +114,7 @@ export const Metadata: MessageFns<Metadata> = {
       description: isSet(object.description) ? globalThis.String(object.description) : "",
       version: isSet(object.version) ? globalThis.String(object.version) : "",
       database: isSet(object.database) ? globalThis.Boolean(object.database) : false,
+      accessChecks: isSet(object.accessChecks) ? AccessCheckChain.fromJSON(object.accessChecks) : undefined,
     };
   },
 
@@ -111,6 +132,9 @@ export const Metadata: MessageFns<Metadata> = {
     if (message.database !== false) {
       obj.database = message.database;
     }
+    if (message.accessChecks !== undefined) {
+      obj.accessChecks = AccessCheckChain.toJSON(message.accessChecks);
+    }
     return obj;
   },
 
@@ -123,6 +147,9 @@ export const Metadata: MessageFns<Metadata> = {
     message.description = object.description ?? "";
     message.version = object.version ?? "";
     message.database = object.database ?? false;
+    message.accessChecks = (object.accessChecks !== undefined && object.accessChecks !== null)
+      ? AccessCheckChain.fromPartial(object.accessChecks)
+      : undefined;
     return message;
   },
 };
@@ -132,6 +159,7 @@ type Builtin = Date | Function | Uint8Array | string | number | boolean | undefi
 type DeepPartial<T> = T extends Builtin ? T
   : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
   : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends { $case: string; value: unknown } ? { $case: T["$case"]; value?: DeepPartial<T["value"]> }
   : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
