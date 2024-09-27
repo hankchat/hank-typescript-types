@@ -30,6 +30,7 @@ commit: build
 publish version="patch": build
     npm version {{ version }}
     npm publish
+    git push --follow-tags
 
 types protos="protos": && build
     npm ci
