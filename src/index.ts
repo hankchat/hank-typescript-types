@@ -1,5 +1,6 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { type AccessCheckChain as AccessCheckChainType, AccessCheckChain as GeneratedAccessCheckChain, AccessCheck } from "./access_check/access_check";
+import { type Metadata as MetadataType, Metadata as GeneratedMetadata } from "./plugin/metadata";
 import { accessCheckOperatorFromJSON } from "./access_check/access_check_operator";
 
 // @@proto-exports-begin
@@ -24,6 +25,21 @@ export * from "./io/cron_input";
 export * from "./cron/cron_job";
 export * from "./hank";
 // @@proto-exports-end
+
+// Override the json ser/de for Metadata to use our custom AccessCheckChain format.
+export const Metadata: MessageFns<MetadataType> = {
+  ...GeneratedMetadata,
+
+  fromJSON(object: any): MetadataType {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      version: isSet(object.version) ? globalThis.String(object.version) : "",
+      database: isSet(object.database) ? globalThis.Boolean(object.database) : false,
+      accessChecks: isSet(object.accessChecks) ? AccessCheckChain.fromJSON(object.accessChecks) : undefined,
+    };
+  },
+}
 
 // Override the json ser/de for AccessCheckChain to use our custom format.
 export const AccessCheckChain: MessageFns<AccessCheckChainType> = {
@@ -60,6 +76,9 @@ type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
+}
 interface MessageFns<T> {
   encode(message: T, writer?: BinaryWriter): BinaryWriter;
   decode(input: BinaryReader | Uint8Array, length?: number): T;
