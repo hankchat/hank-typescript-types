@@ -14,12 +14,15 @@ alias e := edit
 @edit:
     $EDITOR "{{ justfile() }}"
 
+build:
+    npm run build
+
 [confirm("Are you sure?")]
 clean:
     git reset --hard
     git clean -f .
 
-commit:
+commit: build
     git add -u
     git add src/
     git commit -m "Add generated types"
@@ -42,7 +45,6 @@ types protos="protos":
         > src/index.ts.tmp && mv src/index.ts{.tmp,}
     rm exports.txt
 
-publish:
-    npm run build
-    npm version patch
+publish version="patch": build
+    npm version {{ version }}
     npm publish
