@@ -27,6 +27,7 @@ export * from "./hank";
 // @@proto-exports-end
 
 // Override the json ser/de for Metadata to use our custom AccessCheckChain format.
+export interface Metadata extends MetadataType { };
 export const Metadata: MessageFns<MetadataType> = {
   ...GeneratedMetadata,
 
@@ -42,6 +43,7 @@ export const Metadata: MessageFns<MetadataType> = {
 }
 
 // Override the json ser/de for AccessCheckChain to use our custom format.
+export interface AccessCheckChain extends AccessCheckChainType { };
 export const AccessCheckChain: MessageFns<AccessCheckChainType> = {
   ...GeneratedAccessCheckChain,
 
