@@ -19,6 +19,11 @@ clean:
     git reset --hard
     git clean -f .
 
+commit:
+    git add -u
+    git add src/
+    git commit -m "Add generated types"
+
 types protos="protos":
     npm ci
     rm -rf src/*
