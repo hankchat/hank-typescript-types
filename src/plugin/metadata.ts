@@ -7,6 +7,7 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { AccessCheckChain } from "../access_check/access_check";
+import { EscalatedPrivilege, escalatedPrivilegeFromJSON, escalatedPrivilegeToJSON } from "./escalated_privilege";
 
 /** Metadata for a plugin. */
 export interface Metadata {
@@ -30,11 +31,28 @@ export interface Metadata {
    *
    * All functionality of this plugin can optionally be gated by accses checks.
    */
-  accessChecks: AccessCheckChain | undefined;
+  accessChecks:
+    | AccessCheckChain
+    | undefined;
+  /**
+   * A secret escalation key that grants this plugin specific escalated
+   * privileges.
+   */
+  escalationKey: string;
+  /** A list of escalated privileges that this plugin requests to use. */
+  escalatedPrivileges: EscalatedPrivilege[];
 }
 
 function createBaseMetadata(): Metadata {
-  return { name: "", description: "", version: "", database: false, accessChecks: undefined };
+  return {
+    name: "",
+    description: "",
+    version: "",
+    database: false,
+    accessChecks: undefined,
+    escalationKey: "",
+    escalatedPrivileges: [],
+  };
 }
 
 export const Metadata: MessageFns<Metadata> = {
@@ -54,6 +72,14 @@ export const Metadata: MessageFns<Metadata> = {
     if (message.accessChecks !== undefined) {
       AccessCheckChain.encode(message.accessChecks, writer.uint32(42).fork()).join();
     }
+    if (message.escalationKey !== "") {
+      writer.uint32(50).string(message.escalationKey);
+    }
+    writer.uint32(58).fork();
+    for (const v of message.escalatedPrivileges) {
+      writer.int32(v);
+    }
+    writer.join();
     return writer;
   },
 
@@ -99,6 +125,30 @@ export const Metadata: MessageFns<Metadata> = {
 
           message.accessChecks = AccessCheckChain.decode(reader, reader.uint32());
           continue;
+        case 6:
+          if (tag !== 50) {
+            break;
+          }
+
+          message.escalationKey = reader.string();
+          continue;
+        case 7:
+          if (tag === 56) {
+            message.escalatedPrivileges.push(reader.int32() as any);
+
+            continue;
+          }
+
+          if (tag === 58) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.escalatedPrivileges.push(reader.int32() as any);
+            }
+
+            continue;
+          }
+
+          break;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -115,6 +165,10 @@ export const Metadata: MessageFns<Metadata> = {
       version: isSet(object.version) ? globalThis.String(object.version) : "",
       database: isSet(object.database) ? globalThis.Boolean(object.database) : false,
       accessChecks: isSet(object.accessChecks) ? AccessCheckChain.fromJSON(object.accessChecks) : undefined,
+      escalationKey: isSet(object.escalationKey) ? globalThis.String(object.escalationKey) : "",
+      escalatedPrivileges: globalThis.Array.isArray(object?.escalatedPrivileges)
+        ? object.escalatedPrivileges.map((e: any) => escalatedPrivilegeFromJSON(e))
+        : [],
     };
   },
 
@@ -135,6 +189,12 @@ export const Metadata: MessageFns<Metadata> = {
     if (message.accessChecks !== undefined) {
       obj.accessChecks = AccessCheckChain.toJSON(message.accessChecks);
     }
+    if (message.escalationKey !== "") {
+      obj.escalationKey = message.escalationKey;
+    }
+    if (message.escalatedPrivileges?.length) {
+      obj.escalatedPrivileges = message.escalatedPrivileges.map((e) => escalatedPrivilegeToJSON(e));
+    }
     return obj;
   },
 
@@ -150,6 +210,8 @@ export const Metadata: MessageFns<Metadata> = {
     message.accessChecks = (object.accessChecks !== undefined && object.accessChecks !== null)
       ? AccessCheckChain.fromPartial(object.accessChecks)
       : undefined;
+    message.escalationKey = object.escalationKey ?? "";
+    message.escalatedPrivileges = object.escalatedPrivileges?.map((e) => e) || [];
     return message;
   },
 };

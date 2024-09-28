@@ -14,21 +14,29 @@ import { OneShotInput } from "./io/one_shot_input";
 import { OneShotOutput } from "./io/one_shot_output";
 import { ReactInput } from "./io/react_input";
 import { ReactOutput } from "./io/react_output";
+import { ReloadPluginInput } from "./io/reload_plugin_input";
+import { ReloadPluginOutput } from "./io/reload_plugin_output";
 import { SendMessageInput } from "./io/send_message_input";
 import { SendMessageOutput } from "./io/send_message_output";
 
-/** The underlying core Hank service. Should only be used by internal code. */
+/** [Internal] The underlying core Hank service. Should only be used by internal code. */
 export interface Hank {
-  /** Send a chat message to Hank. */
+  /** [Internal] Send a chat message to Hank. */
   send_message(request: SendMessageInput): Promise<SendMessageOutput>;
-  /** Send a reaction to Hank. */
+  /** [Internal] Send a reaction to Hank. */
   react(request: ReactInput): Promise<ReactOutput>;
-  /** Send a database query to hank. */
+  /** [Internal] Send a database query to hank. */
   db_query(request: DbQueryInput): Promise<DbQueryOutput>;
-  /** Send a cron job to hank. */
+  /** [Internal] Send a cron job to hank. */
   cron(request: CronInput): Promise<CronOutput>;
-  /** Send a one shot job to hank. */
+  /** [Internal] Send a one shot job to hank. */
   one_shot(request: OneShotInput): Promise<OneShotOutput>;
+  /**
+   * [Internal] Send a reload plugin request to hank.
+   *
+   * Requires EscalatedPrivilege::RELOAD_PLUGIN
+   */
+  reload_plugin(request: ReloadPluginInput): Promise<ReloadPluginOutput>;
 }
 
 export const HankServiceName = "hank.Hank";
@@ -43,6 +51,7 @@ export class HankClientImpl implements Hank {
     this.db_query = this.db_query.bind(this);
     this.cron = this.cron.bind(this);
     this.one_shot = this.one_shot.bind(this);
+    this.reload_plugin = this.reload_plugin.bind(this);
   }
   send_message(request: SendMessageInput): Promise<SendMessageOutput> {
     const data = SendMessageInput.encode(request).finish();
@@ -72,6 +81,12 @@ export class HankClientImpl implements Hank {
     const data = OneShotInput.encode(request).finish();
     const promise = this.rpc.request(this.service, "one_shot", data);
     return promise.then((data) => OneShotOutput.decode(new BinaryReader(data)));
+  }
+
+  reload_plugin(request: ReloadPluginInput): Promise<ReloadPluginOutput> {
+    const data = ReloadPluginInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "reload_plugin", data);
+    return promise.then((data) => ReloadPluginOutput.decode(new BinaryReader(data)));
   }
 }
 
