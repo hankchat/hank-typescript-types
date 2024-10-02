@@ -7,6 +7,8 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { AccessCheckChain } from "../access_check/access_check";
+import { Argument } from "./argument";
+import { Command } from "./command";
 import { EscalatedPrivilege, escalatedPrivilegeFromJSON, escalatedPrivilegeToJSON } from "./escalated_privilege";
 
 /** Metadata for a plugin. */
@@ -31,16 +33,34 @@ export interface Metadata {
    *
    * All functionality of this plugin can optionally be gated by accses checks.
    */
-  accessChecks:
+  accessChecks?:
     | AccessCheckChain
     | undefined;
   /**
    * A secret escalation key that grants this plugin specific escalated
    * privileges.
    */
-  escalationKey: string;
+  escalationKey?:
+    | string
+    | undefined;
   /** A list of escalated privileges that this plugin requests to use. */
   escalatedPrivileges: EscalatedPrivilege[];
+  /** The author of the plugin. */
+  author: string;
+  /** Whether or not this plugin handles commands. */
+  handlesCommands: boolean;
+  /** Whether or not this plugin handles messages. */
+  handlesMessages: boolean;
+  /** Optionally override the plugin command name. */
+  commandName?:
+    | string
+    | undefined;
+  /** Optional aliases for the plugin command. */
+  aliases: string[];
+  /** Arguments for the plugin command. */
+  arguments: Argument[];
+  /** Plugin subcommands. */
+  subcommands: Command[];
 }
 
 function createBaseMetadata(): Metadata {
@@ -50,8 +70,15 @@ function createBaseMetadata(): Metadata {
     version: "",
     database: false,
     accessChecks: undefined,
-    escalationKey: "",
+    escalationKey: undefined,
     escalatedPrivileges: [],
+    author: "",
+    handlesCommands: false,
+    handlesMessages: false,
+    commandName: undefined,
+    aliases: [],
+    arguments: [],
+    subcommands: [],
   };
 }
 
@@ -72,7 +99,7 @@ export const Metadata: MessageFns<Metadata> = {
     if (message.accessChecks !== undefined) {
       AccessCheckChain.encode(message.accessChecks, writer.uint32(42).fork()).join();
     }
-    if (message.escalationKey !== "") {
+    if (message.escalationKey !== undefined) {
       writer.uint32(50).string(message.escalationKey);
     }
     writer.uint32(58).fork();
@@ -80,6 +107,27 @@ export const Metadata: MessageFns<Metadata> = {
       writer.int32(v);
     }
     writer.join();
+    if (message.author !== "") {
+      writer.uint32(66).string(message.author);
+    }
+    if (message.handlesCommands !== false) {
+      writer.uint32(72).bool(message.handlesCommands);
+    }
+    if (message.handlesMessages !== false) {
+      writer.uint32(80).bool(message.handlesMessages);
+    }
+    if (message.commandName !== undefined) {
+      writer.uint32(90).string(message.commandName);
+    }
+    for (const v of message.aliases) {
+      writer.uint32(98).string(v!);
+    }
+    for (const v of message.arguments) {
+      Argument.encode(v!, writer.uint32(106).fork()).join();
+    }
+    for (const v of message.subcommands) {
+      Command.encode(v!, writer.uint32(114).fork()).join();
+    }
     return writer;
   },
 
@@ -149,6 +197,55 @@ export const Metadata: MessageFns<Metadata> = {
           }
 
           break;
+        case 8:
+          if (tag !== 66) {
+            break;
+          }
+
+          message.author = reader.string();
+          continue;
+        case 9:
+          if (tag !== 72) {
+            break;
+          }
+
+          message.handlesCommands = reader.bool();
+          continue;
+        case 10:
+          if (tag !== 80) {
+            break;
+          }
+
+          message.handlesMessages = reader.bool();
+          continue;
+        case 11:
+          if (tag !== 90) {
+            break;
+          }
+
+          message.commandName = reader.string();
+          continue;
+        case 12:
+          if (tag !== 98) {
+            break;
+          }
+
+          message.aliases.push(reader.string());
+          continue;
+        case 13:
+          if (tag !== 106) {
+            break;
+          }
+
+          message.arguments.push(Argument.decode(reader, reader.uint32()));
+          continue;
+        case 14:
+          if (tag !== 114) {
+            break;
+          }
+
+          message.subcommands.push(Command.decode(reader, reader.uint32()));
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -165,9 +262,20 @@ export const Metadata: MessageFns<Metadata> = {
       version: isSet(object.version) ? globalThis.String(object.version) : "",
       database: isSet(object.database) ? globalThis.Boolean(object.database) : false,
       accessChecks: isSet(object.accessChecks) ? AccessCheckChain.fromJSON(object.accessChecks) : undefined,
-      escalationKey: isSet(object.escalationKey) ? globalThis.String(object.escalationKey) : "",
+      escalationKey: isSet(object.escalationKey) ? globalThis.String(object.escalationKey) : undefined,
       escalatedPrivileges: globalThis.Array.isArray(object?.escalatedPrivileges)
         ? object.escalatedPrivileges.map((e: any) => escalatedPrivilegeFromJSON(e))
+        : [],
+      author: isSet(object.author) ? globalThis.String(object.author) : "",
+      handlesCommands: isSet(object.handlesCommands) ? globalThis.Boolean(object.handlesCommands) : false,
+      handlesMessages: isSet(object.handlesMessages) ? globalThis.Boolean(object.handlesMessages) : false,
+      commandName: isSet(object.commandName) ? globalThis.String(object.commandName) : undefined,
+      aliases: globalThis.Array.isArray(object?.aliases) ? object.aliases.map((e: any) => globalThis.String(e)) : [],
+      arguments: globalThis.Array.isArray(object?.arguments)
+        ? object.arguments.map((e: any) => Argument.fromJSON(e))
+        : [],
+      subcommands: globalThis.Array.isArray(object?.subcommands)
+        ? object.subcommands.map((e: any) => Command.fromJSON(e))
         : [],
     };
   },
@@ -189,11 +297,32 @@ export const Metadata: MessageFns<Metadata> = {
     if (message.accessChecks !== undefined) {
       obj.accessChecks = AccessCheckChain.toJSON(message.accessChecks);
     }
-    if (message.escalationKey !== "") {
+    if (message.escalationKey !== undefined) {
       obj.escalationKey = message.escalationKey;
     }
     if (message.escalatedPrivileges?.length) {
       obj.escalatedPrivileges = message.escalatedPrivileges.map((e) => escalatedPrivilegeToJSON(e));
+    }
+    if (message.author !== "") {
+      obj.author = message.author;
+    }
+    if (message.handlesCommands !== false) {
+      obj.handlesCommands = message.handlesCommands;
+    }
+    if (message.handlesMessages !== false) {
+      obj.handlesMessages = message.handlesMessages;
+    }
+    if (message.commandName !== undefined) {
+      obj.commandName = message.commandName;
+    }
+    if (message.aliases?.length) {
+      obj.aliases = message.aliases;
+    }
+    if (message.arguments?.length) {
+      obj.arguments = message.arguments.map((e) => Argument.toJSON(e));
+    }
+    if (message.subcommands?.length) {
+      obj.subcommands = message.subcommands.map((e) => Command.toJSON(e));
     }
     return obj;
   },
@@ -210,8 +339,15 @@ export const Metadata: MessageFns<Metadata> = {
     message.accessChecks = (object.accessChecks !== undefined && object.accessChecks !== null)
       ? AccessCheckChain.fromPartial(object.accessChecks)
       : undefined;
-    message.escalationKey = object.escalationKey ?? "";
+    message.escalationKey = object.escalationKey ?? undefined;
     message.escalatedPrivileges = object.escalatedPrivileges?.map((e) => e) || [];
+    message.author = object.author ?? "";
+    message.handlesCommands = object.handlesCommands ?? false;
+    message.handlesMessages = object.handlesMessages ?? false;
+    message.commandName = object.commandName ?? undefined;
+    message.aliases = object.aliases?.map((e) => e) || [];
+    message.arguments = object.arguments?.map((e) => Argument.fromPartial(e)) || [];
+    message.subcommands = object.subcommands?.map((e) => Command.fromPartial(e)) || [];
     return message;
   },
 };
