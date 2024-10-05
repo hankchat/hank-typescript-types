@@ -11,10 +11,6 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 export interface CommandContext {
   /** The name of the command. */
   name: string;
-  /** Valid arguments for this command. */
-  validArguments: string[];
-  /** Valid subcommands for this command. */
-  validSubcommands: string[];
   /** Arguments passed to the command. */
   arguments: { [key: string]: string };
   /** Optional nested subcommand context. */
@@ -27,7 +23,7 @@ export interface CommandContext_ArgumentsEntry {
 }
 
 function createBaseCommandContext(): CommandContext {
-  return { name: "", validArguments: [], validSubcommands: [], arguments: {}, subcommand: undefined };
+  return { name: "", arguments: {}, subcommand: undefined };
 }
 
 export const CommandContext: MessageFns<CommandContext> = {
@@ -35,17 +31,11 @@ export const CommandContext: MessageFns<CommandContext> = {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
-    for (const v of message.validArguments) {
-      writer.uint32(18).string(v!);
-    }
-    for (const v of message.validSubcommands) {
-      writer.uint32(26).string(v!);
-    }
     Object.entries(message.arguments).forEach(([key, value]) => {
-      CommandContext_ArgumentsEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).join();
+      CommandContext_ArgumentsEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
     });
     if (message.subcommand !== undefined) {
-      CommandContext.encode(message.subcommand, writer.uint32(42).fork()).join();
+      CommandContext.encode(message.subcommand, writer.uint32(26).fork()).join();
     }
     return writer;
   },
@@ -69,27 +59,13 @@ export const CommandContext: MessageFns<CommandContext> = {
             break;
           }
 
-          message.validArguments.push(reader.string());
+          const entry2 = CommandContext_ArgumentsEntry.decode(reader, reader.uint32());
+          if (entry2.value !== undefined) {
+            message.arguments[entry2.key] = entry2.value;
+          }
           continue;
         case 3:
           if (tag !== 26) {
-            break;
-          }
-
-          message.validSubcommands.push(reader.string());
-          continue;
-        case 4:
-          if (tag !== 34) {
-            break;
-          }
-
-          const entry4 = CommandContext_ArgumentsEntry.decode(reader, reader.uint32());
-          if (entry4.value !== undefined) {
-            message.arguments[entry4.key] = entry4.value;
-          }
-          continue;
-        case 5:
-          if (tag !== 42) {
             break;
           }
 
@@ -107,12 +83,6 @@ export const CommandContext: MessageFns<CommandContext> = {
   fromJSON(object: any): CommandContext {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      validArguments: globalThis.Array.isArray(object?.validArguments)
-        ? object.validArguments.map((e: any) => globalThis.String(e))
-        : [],
-      validSubcommands: globalThis.Array.isArray(object?.validSubcommands)
-        ? object.validSubcommands.map((e: any) => globalThis.String(e))
-        : [],
       arguments: isObject(object.arguments)
         ? Object.entries(object.arguments).reduce<{ [key: string]: string }>((acc, [key, value]) => {
           acc[key] = String(value);
@@ -127,12 +97,6 @@ export const CommandContext: MessageFns<CommandContext> = {
     const obj: any = {};
     if (message.name !== "") {
       obj.name = message.name;
-    }
-    if (message.validArguments?.length) {
-      obj.validArguments = message.validArguments;
-    }
-    if (message.validSubcommands?.length) {
-      obj.validSubcommands = message.validSubcommands;
     }
     if (message.arguments) {
       const entries = Object.entries(message.arguments);
@@ -155,8 +119,6 @@ export const CommandContext: MessageFns<CommandContext> = {
   fromPartial<I extends Exact<DeepPartial<CommandContext>, I>>(object: I): CommandContext {
     const message = createBaseCommandContext();
     message.name = object.name ?? "";
-    message.validArguments = object.validArguments?.map((e) => e) || [];
-    message.validSubcommands = object.validSubcommands?.map((e) => e) || [];
     message.arguments = Object.entries(object.arguments ?? {}).reduce<{ [key: string]: string }>(
       (acc, [key, value]) => {
         if (value !== undefined) {
