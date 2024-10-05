@@ -4,6 +4,7 @@ export * from "./database/prepared_statement";
 export * from "./plugin/escalated_privilege";
 export * from "./access_check/access_check";
 export * from "./io/reload_plugin_output";
+export * from "./plugin/command_context";
 export * from "./io/send_message_output";
 export * from "./io/reload_plugin_input";
 export * from "./io/send_message_input";
