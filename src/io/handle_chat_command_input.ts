@@ -6,22 +6,30 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Message } from "../message/message";
 import { CommandContext } from "../plugin/command_context";
 
 /** [Internal] Input to a handle chat command request to Hank. */
 export interface HandleChatCommandInput {
   /** The chat command context to send to Hank. */
-  context: CommandContext | undefined;
+  context:
+    | CommandContext
+    | undefined;
+  /** The message that the chat command originates from. */
+  message: Message | undefined;
 }
 
 function createBaseHandleChatCommandInput(): HandleChatCommandInput {
-  return { context: undefined };
+  return { context: undefined, message: undefined };
 }
 
 export const HandleChatCommandInput: MessageFns<HandleChatCommandInput> = {
   encode(message: HandleChatCommandInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.context !== undefined) {
       CommandContext.encode(message.context, writer.uint32(10).fork()).join();
+    }
+    if (message.message !== undefined) {
+      Message.encode(message.message, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -40,6 +48,13 @@ export const HandleChatCommandInput: MessageFns<HandleChatCommandInput> = {
 
           message.context = CommandContext.decode(reader, reader.uint32());
           continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = Message.decode(reader, reader.uint32());
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -50,13 +65,19 @@ export const HandleChatCommandInput: MessageFns<HandleChatCommandInput> = {
   },
 
   fromJSON(object: any): HandleChatCommandInput {
-    return { context: isSet(object.context) ? CommandContext.fromJSON(object.context) : undefined };
+    return {
+      context: isSet(object.context) ? CommandContext.fromJSON(object.context) : undefined,
+      message: isSet(object.message) ? Message.fromJSON(object.message) : undefined,
+    };
   },
 
   toJSON(message: HandleChatCommandInput): unknown {
     const obj: any = {};
     if (message.context !== undefined) {
       obj.context = CommandContext.toJSON(message.context);
+    }
+    if (message.message !== undefined) {
+      obj.message = Message.toJSON(message.message);
     }
     return obj;
   },
@@ -68,6 +89,9 @@ export const HandleChatCommandInput: MessageFns<HandleChatCommandInput> = {
     const message = createBaseHandleChatCommandInput();
     message.context = (object.context !== undefined && object.context !== null)
       ? CommandContext.fromPartial(object.context)
+      : undefined;
+    message.message = (object.message !== undefined && object.message !== null)
+      ? Message.fromPartial(object.message)
       : undefined;
     return message;
   },
