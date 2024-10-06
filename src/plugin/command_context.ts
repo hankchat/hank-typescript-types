@@ -13,18 +13,13 @@ export interface CommandContext {
   /** The name of the command. */
   name: string;
   /** Arguments passed to the command. */
-  arguments: { [key: number]: CommandContextArgument };
+  arguments: CommandContextArgument[];
   /** Optional nested subcommand context. */
   subcommand?: CommandContext | undefined;
 }
 
-export interface CommandContext_ArgumentsEntry {
-  key: number;
-  value: CommandContextArgument | undefined;
-}
-
 function createBaseCommandContext(): CommandContext {
-  return { name: "", arguments: {}, subcommand: undefined };
+  return { name: "", arguments: [], subcommand: undefined };
 }
 
 export const CommandContext: MessageFns<CommandContext> = {
@@ -32,9 +27,9 @@ export const CommandContext: MessageFns<CommandContext> = {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
-    Object.entries(message.arguments).forEach(([key, value]) => {
-      CommandContext_ArgumentsEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
-    });
+    for (const v of message.arguments) {
+      CommandContextArgument.encode(v!, writer.uint32(18).fork()).join();
+    }
     if (message.subcommand !== undefined) {
       CommandContext.encode(message.subcommand, writer.uint32(26).fork()).join();
     }
@@ -60,10 +55,7 @@ export const CommandContext: MessageFns<CommandContext> = {
             break;
           }
 
-          const entry2 = CommandContext_ArgumentsEntry.decode(reader, reader.uint32());
-          if (entry2.value !== undefined) {
-            message.arguments[entry2.key] = entry2.value;
-          }
+          message.arguments.push(CommandContextArgument.decode(reader, reader.uint32()));
           continue;
         case 3:
           if (tag !== 26) {
@@ -84,12 +76,9 @@ export const CommandContext: MessageFns<CommandContext> = {
   fromJSON(object: any): CommandContext {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      arguments: isObject(object.arguments)
-        ? Object.entries(object.arguments).reduce<{ [key: number]: CommandContextArgument }>((acc, [key, value]) => {
-          acc[globalThis.Number(key)] = CommandContextArgument.fromJSON(value);
-          return acc;
-        }, {})
-        : {},
+      arguments: globalThis.Array.isArray(object?.arguments)
+        ? object.arguments.map((e: any) => CommandContextArgument.fromJSON(e))
+        : [],
       subcommand: isSet(object.subcommand) ? CommandContext.fromJSON(object.subcommand) : undefined,
     };
   },
@@ -99,14 +88,8 @@ export const CommandContext: MessageFns<CommandContext> = {
     if (message.name !== "") {
       obj.name = message.name;
     }
-    if (message.arguments) {
-      const entries = Object.entries(message.arguments);
-      if (entries.length > 0) {
-        obj.arguments = {};
-        entries.forEach(([k, v]) => {
-          obj.arguments[k] = CommandContextArgument.toJSON(v);
-        });
-      }
+    if (message.arguments?.length) {
+      obj.arguments = message.arguments.map((e) => CommandContextArgument.toJSON(e));
     }
     if (message.subcommand !== undefined) {
       obj.subcommand = CommandContext.toJSON(message.subcommand);
@@ -120,95 +103,9 @@ export const CommandContext: MessageFns<CommandContext> = {
   fromPartial<I extends Exact<DeepPartial<CommandContext>, I>>(object: I): CommandContext {
     const message = createBaseCommandContext();
     message.name = object.name ?? "";
-    message.arguments = Object.entries(object.arguments ?? {}).reduce<{ [key: number]: CommandContextArgument }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[globalThis.Number(key)] = CommandContextArgument.fromPartial(value);
-        }
-        return acc;
-      },
-      {},
-    );
+    message.arguments = object.arguments?.map((e) => CommandContextArgument.fromPartial(e)) || [];
     message.subcommand = (object.subcommand !== undefined && object.subcommand !== null)
       ? CommandContext.fromPartial(object.subcommand)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseCommandContext_ArgumentsEntry(): CommandContext_ArgumentsEntry {
-  return { key: 0, value: undefined };
-}
-
-export const CommandContext_ArgumentsEntry: MessageFns<CommandContext_ArgumentsEntry> = {
-  encode(message: CommandContext_ArgumentsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.key !== 0) {
-      writer.uint32(8).int32(message.key);
-    }
-    if (message.value !== undefined) {
-      CommandContextArgument.encode(message.value, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): CommandContext_ArgumentsEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCommandContext_ArgumentsEntry();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 8) {
-            break;
-          }
-
-          message.key = reader.int32();
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.value = CommandContextArgument.decode(reader, reader.uint32());
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CommandContext_ArgumentsEntry {
-    return {
-      key: isSet(object.key) ? globalThis.Number(object.key) : 0,
-      value: isSet(object.value) ? CommandContextArgument.fromJSON(object.value) : undefined,
-    };
-  },
-
-  toJSON(message: CommandContext_ArgumentsEntry): unknown {
-    const obj: any = {};
-    if (message.key !== 0) {
-      obj.key = Math.round(message.key);
-    }
-    if (message.value !== undefined) {
-      obj.value = CommandContextArgument.toJSON(message.value);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CommandContext_ArgumentsEntry>, I>>(base?: I): CommandContext_ArgumentsEntry {
-    return CommandContext_ArgumentsEntry.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CommandContext_ArgumentsEntry>, I>>(
-    object: I,
-  ): CommandContext_ArgumentsEntry {
-    const message = createBaseCommandContext_ArgumentsEntry();
-    message.key = object.key ?? 0;
-    message.value = (object.value !== undefined && object.value !== null)
-      ? CommandContextArgument.fromPartial(object.value)
       : undefined;
     return message;
   },
@@ -226,10 +123,6 @@ type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
-
-function isObject(value: any): boolean {
-  return typeof value === "object" && value !== null;
-}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
