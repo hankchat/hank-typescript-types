@@ -6,6 +6,7 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { AccessCheckChain } from "../access_check/access_check";
 import { Argument } from "./argument";
 
 /** Plugin commands. */
@@ -32,6 +33,12 @@ export interface Command {
   arguments: Argument[];
   /** Command subcommands. */
   subcommands: Command[];
+  /**
+   * Access checks
+   *
+   * This command can optionally be gated by access checks.
+   */
+  accessChecks?: AccessCheckChain | undefined;
 }
 
 function createBaseCommand(): Command {
@@ -43,6 +50,7 @@ function createBaseCommand(): Command {
     aliases: [],
     arguments: [],
     subcommands: [],
+    accessChecks: undefined,
   };
 }
 
@@ -68,6 +76,9 @@ export const Command: MessageFns<Command> = {
     }
     for (const v of message.subcommands) {
       Command.encode(v!, writer.uint32(58).fork()).join();
+    }
+    if (message.accessChecks !== undefined) {
+      AccessCheckChain.encode(message.accessChecks, writer.uint32(66).fork()).join();
     }
     return writer;
   },
@@ -128,6 +139,13 @@ export const Command: MessageFns<Command> = {
 
           message.subcommands.push(Command.decode(reader, reader.uint32()));
           continue;
+        case 8:
+          if (tag !== 66) {
+            break;
+          }
+
+          message.accessChecks = AccessCheckChain.decode(reader, reader.uint32());
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -150,6 +168,7 @@ export const Command: MessageFns<Command> = {
       subcommands: globalThis.Array.isArray(object?.subcommands)
         ? object.subcommands.map((e: any) => Command.fromJSON(e))
         : [],
+      accessChecks: isSet(object.accessChecks) ? AccessCheckChain.fromJSON(object.accessChecks) : undefined,
     };
   },
 
@@ -176,6 +195,9 @@ export const Command: MessageFns<Command> = {
     if (message.subcommands?.length) {
       obj.subcommands = message.subcommands.map((e) => Command.toJSON(e));
     }
+    if (message.accessChecks !== undefined) {
+      obj.accessChecks = AccessCheckChain.toJSON(message.accessChecks);
+    }
     return obj;
   },
 
@@ -191,6 +213,9 @@ export const Command: MessageFns<Command> = {
     message.aliases = object.aliases?.map((e) => e) || [];
     message.arguments = object.arguments?.map((e) => Argument.fromPartial(e)) || [];
     message.subcommands = object.subcommands?.map((e) => Command.fromPartial(e)) || [];
+    message.accessChecks = (object.accessChecks !== undefined && object.accessChecks !== null)
+      ? AccessCheckChain.fromPartial(object.accessChecks)
+      : undefined;
     return message;
   },
 };

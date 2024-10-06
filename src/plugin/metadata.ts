@@ -61,6 +61,10 @@ export interface Metadata {
   arguments: Argument[];
   /** Plugin subcommands. */
   subcommands: Command[];
+  /** Hosts that this plugin requests permissions to access via HTTP. */
+  allowedHosts: string[];
+  /** Pool size this plugin requests. */
+  poolSize: number;
 }
 
 function createBaseMetadata(): Metadata {
@@ -79,6 +83,8 @@ function createBaseMetadata(): Metadata {
     aliases: [],
     arguments: [],
     subcommands: [],
+    allowedHosts: [],
+    poolSize: 0,
   };
 }
 
@@ -127,6 +133,12 @@ export const Metadata: MessageFns<Metadata> = {
     }
     for (const v of message.subcommands) {
       Command.encode(v!, writer.uint32(114).fork()).join();
+    }
+    for (const v of message.allowedHosts) {
+      writer.uint32(122).string(v!);
+    }
+    if (message.poolSize !== 0) {
+      writer.uint32(128).int32(message.poolSize);
     }
     return writer;
   },
@@ -246,6 +258,20 @@ export const Metadata: MessageFns<Metadata> = {
 
           message.subcommands.push(Command.decode(reader, reader.uint32()));
           continue;
+        case 15:
+          if (tag !== 122) {
+            break;
+          }
+
+          message.allowedHosts.push(reader.string());
+          continue;
+        case 16:
+          if (tag !== 128) {
+            break;
+          }
+
+          message.poolSize = reader.int32();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -277,6 +303,10 @@ export const Metadata: MessageFns<Metadata> = {
       subcommands: globalThis.Array.isArray(object?.subcommands)
         ? object.subcommands.map((e: any) => Command.fromJSON(e))
         : [],
+      allowedHosts: globalThis.Array.isArray(object?.allowedHosts)
+        ? object.allowedHosts.map((e: any) => globalThis.String(e))
+        : [],
+      poolSize: isSet(object.poolSize) ? globalThis.Number(object.poolSize) : 0,
     };
   },
 
@@ -324,6 +354,12 @@ export const Metadata: MessageFns<Metadata> = {
     if (message.subcommands?.length) {
       obj.subcommands = message.subcommands.map((e) => Command.toJSON(e));
     }
+    if (message.allowedHosts?.length) {
+      obj.allowedHosts = message.allowedHosts;
+    }
+    if (message.poolSize !== 0) {
+      obj.poolSize = Math.round(message.poolSize);
+    }
     return obj;
   },
 
@@ -348,6 +384,8 @@ export const Metadata: MessageFns<Metadata> = {
     message.aliases = object.aliases?.map((e) => e) || [];
     message.arguments = object.arguments?.map((e) => Argument.fromPartial(e)) || [];
     message.subcommands = object.subcommands?.map((e) => Command.fromPartial(e)) || [];
+    message.allowedHosts = object.allowedHosts?.map((e) => e) || [];
+    message.poolSize = object.poolSize ?? 0;
     return message;
   },
 };

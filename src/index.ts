@@ -11,6 +11,8 @@ export * from "./plugin/command_context";
 export * from "./io/send_message_output";
 export * from "./io/reload_plugin_input";
 export * from "./io/send_message_input";
+export * from "./io/load_plugin_output";
+export * from "./io/load_plugin_input";
 export * from "./io/one_shot_output";
 export * from "./io/db_query_output";
 export * from "./io/one_shot_input";

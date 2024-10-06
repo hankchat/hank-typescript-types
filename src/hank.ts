@@ -10,6 +10,8 @@ import { CronInput } from "./io/cron_input";
 import { CronOutput } from "./io/cron_output";
 import { DbQueryInput } from "./io/db_query_input";
 import { DbQueryOutput } from "./io/db_query_output";
+import { LoadPluginInput } from "./io/load_plugin_input";
+import { LoadPluginOutput } from "./io/load_plugin_output";
 import { OneShotInput } from "./io/one_shot_input";
 import { OneShotOutput } from "./io/one_shot_output";
 import { ReactInput } from "./io/react_input";
@@ -37,6 +39,12 @@ export interface Hank {
    * Requires EscalatedPrivilege::RELOAD_PLUGIN
    */
   reload_plugin(request: ReloadPluginInput): Promise<ReloadPluginOutput>;
+  /**
+   * [Internal] Send a load plugin request to hank.
+   *
+   * Requires EscalatedPrivilege::LOAD_PLUGIN
+   */
+  load_plugin(request: LoadPluginInput): Promise<LoadPluginOutput>;
 }
 
 export const HankServiceName = "hank.Hank";
@@ -52,6 +60,7 @@ export class HankClientImpl implements Hank {
     this.cron = this.cron.bind(this);
     this.one_shot = this.one_shot.bind(this);
     this.reload_plugin = this.reload_plugin.bind(this);
+    this.load_plugin = this.load_plugin.bind(this);
   }
   send_message(request: SendMessageInput): Promise<SendMessageOutput> {
     const data = SendMessageInput.encode(request).finish();
@@ -87,6 +96,12 @@ export class HankClientImpl implements Hank {
     const data = ReloadPluginInput.encode(request).finish();
     const promise = this.rpc.request(this.service, "reload_plugin", data);
     return promise.then((data) => ReloadPluginOutput.decode(new BinaryReader(data)));
+  }
+
+  load_plugin(request: LoadPluginInput): Promise<LoadPluginOutput> {
+    const data = LoadPluginInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "load_plugin", data);
+    return promise.then((data) => LoadPluginOutput.decode(new BinaryReader(data)));
   }
 }
 

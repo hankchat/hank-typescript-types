@@ -9,6 +9,7 @@
 export enum EscalatedPrivilege {
   ALL = 0,
   RELOAD_PLUGIN = 1,
+  LOAD_PLUGIN = 2,
   UNRECOGNIZED = -1,
 }
 
@@ -20,6 +21,9 @@ export function escalatedPrivilegeFromJSON(object: any): EscalatedPrivilege {
     case 1:
     case "RELOAD_PLUGIN":
       return EscalatedPrivilege.RELOAD_PLUGIN;
+    case 2:
+    case "LOAD_PLUGIN":
+      return EscalatedPrivilege.LOAD_PLUGIN;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -33,6 +37,8 @@ export function escalatedPrivilegeToJSON(object: EscalatedPrivilege): string {
       return "ALL";
     case EscalatedPrivilege.RELOAD_PLUGIN:
       return "RELOAD_PLUGIN";
+    case EscalatedPrivilege.LOAD_PLUGIN:
+      return "LOAD_PLUGIN";
     case EscalatedPrivilege.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
