@@ -64,7 +64,7 @@ export interface Metadata {
   /** Hosts that this plugin requests permissions to access via HTTP. */
   allowedHosts: string[];
   /** Pool size this plugin requests. */
-  poolSize: number;
+  poolSize?: number | undefined;
 }
 
 function createBaseMetadata(): Metadata {
@@ -84,7 +84,7 @@ function createBaseMetadata(): Metadata {
     arguments: [],
     subcommands: [],
     allowedHosts: [],
-    poolSize: 0,
+    poolSize: undefined,
   };
 }
 
@@ -137,7 +137,7 @@ export const Metadata: MessageFns<Metadata> = {
     for (const v of message.allowedHosts) {
       writer.uint32(122).string(v!);
     }
-    if (message.poolSize !== 0) {
+    if (message.poolSize !== undefined) {
       writer.uint32(128).int32(message.poolSize);
     }
     return writer;
@@ -306,7 +306,7 @@ export const Metadata: MessageFns<Metadata> = {
       allowedHosts: globalThis.Array.isArray(object?.allowedHosts)
         ? object.allowedHosts.map((e: any) => globalThis.String(e))
         : [],
-      poolSize: isSet(object.poolSize) ? globalThis.Number(object.poolSize) : 0,
+      poolSize: isSet(object.poolSize) ? globalThis.Number(object.poolSize) : undefined,
     };
   },
 
@@ -357,7 +357,7 @@ export const Metadata: MessageFns<Metadata> = {
     if (message.allowedHosts?.length) {
       obj.allowedHosts = message.allowedHosts;
     }
-    if (message.poolSize !== 0) {
+    if (message.poolSize !== undefined) {
       obj.poolSize = Math.round(message.poolSize);
     }
     return obj;
@@ -385,7 +385,7 @@ export const Metadata: MessageFns<Metadata> = {
     message.arguments = object.arguments?.map((e) => Argument.fromPartial(e)) || [];
     message.subcommands = object.subcommands?.map((e) => Command.fromPartial(e)) || [];
     message.allowedHosts = object.allowedHosts?.map((e) => e) || [];
-    message.poolSize = object.poolSize ?? 0;
+    message.poolSize = object.poolSize ?? undefined;
     return message;
   },
 };
