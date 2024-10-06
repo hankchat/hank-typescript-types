@@ -6,20 +6,21 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { CommandContextArgument } from "./command_context_argument";
 
 /** Plugin command context. */
 export interface CommandContext {
   /** The name of the command. */
   name: string;
   /** Arguments passed to the command. */
-  arguments: { [key: string]: string };
+  arguments: { [key: number]: CommandContextArgument };
   /** Optional nested subcommand context. */
   subcommand?: CommandContext | undefined;
 }
 
 export interface CommandContext_ArgumentsEntry {
-  key: string;
-  value: string;
+  key: number;
+  value: CommandContextArgument | undefined;
 }
 
 function createBaseCommandContext(): CommandContext {
@@ -84,8 +85,8 @@ export const CommandContext: MessageFns<CommandContext> = {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
       arguments: isObject(object.arguments)
-        ? Object.entries(object.arguments).reduce<{ [key: string]: string }>((acc, [key, value]) => {
-          acc[key] = String(value);
+        ? Object.entries(object.arguments).reduce<{ [key: number]: CommandContextArgument }>((acc, [key, value]) => {
+          acc[globalThis.Number(key)] = CommandContextArgument.fromJSON(value);
           return acc;
         }, {})
         : {},
@@ -103,7 +104,7 @@ export const CommandContext: MessageFns<CommandContext> = {
       if (entries.length > 0) {
         obj.arguments = {};
         entries.forEach(([k, v]) => {
-          obj.arguments[k] = v;
+          obj.arguments[k] = CommandContextArgument.toJSON(v);
         });
       }
     }
@@ -119,10 +120,10 @@ export const CommandContext: MessageFns<CommandContext> = {
   fromPartial<I extends Exact<DeepPartial<CommandContext>, I>>(object: I): CommandContext {
     const message = createBaseCommandContext();
     message.name = object.name ?? "";
-    message.arguments = Object.entries(object.arguments ?? {}).reduce<{ [key: string]: string }>(
+    message.arguments = Object.entries(object.arguments ?? {}).reduce<{ [key: number]: CommandContextArgument }>(
       (acc, [key, value]) => {
         if (value !== undefined) {
-          acc[key] = globalThis.String(value);
+          acc[globalThis.Number(key)] = CommandContextArgument.fromPartial(value);
         }
         return acc;
       },
@@ -136,16 +137,16 @@ export const CommandContext: MessageFns<CommandContext> = {
 };
 
 function createBaseCommandContext_ArgumentsEntry(): CommandContext_ArgumentsEntry {
-  return { key: "", value: "" };
+  return { key: 0, value: undefined };
 }
 
 export const CommandContext_ArgumentsEntry: MessageFns<CommandContext_ArgumentsEntry> = {
   encode(message: CommandContext_ArgumentsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
+    if (message.key !== 0) {
+      writer.uint32(8).int32(message.key);
     }
-    if (message.value !== "") {
-      writer.uint32(18).string(message.value);
+    if (message.value !== undefined) {
+      CommandContextArgument.encode(message.value, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -158,18 +159,18 @@ export const CommandContext_ArgumentsEntry: MessageFns<CommandContext_ArgumentsE
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 10) {
+          if (tag !== 8) {
             break;
           }
 
-          message.key = reader.string();
+          message.key = reader.int32();
           continue;
         case 2:
           if (tag !== 18) {
             break;
           }
 
-          message.value = reader.string();
+          message.value = CommandContextArgument.decode(reader, reader.uint32());
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -182,18 +183,18 @@ export const CommandContext_ArgumentsEntry: MessageFns<CommandContext_ArgumentsE
 
   fromJSON(object: any): CommandContext_ArgumentsEntry {
     return {
-      key: isSet(object.key) ? globalThis.String(object.key) : "",
-      value: isSet(object.value) ? globalThis.String(object.value) : "",
+      key: isSet(object.key) ? globalThis.Number(object.key) : 0,
+      value: isSet(object.value) ? CommandContextArgument.fromJSON(object.value) : undefined,
     };
   },
 
   toJSON(message: CommandContext_ArgumentsEntry): unknown {
     const obj: any = {};
-    if (message.key !== "") {
-      obj.key = message.key;
+    if (message.key !== 0) {
+      obj.key = Math.round(message.key);
     }
-    if (message.value !== "") {
-      obj.value = message.value;
+    if (message.value !== undefined) {
+      obj.value = CommandContextArgument.toJSON(message.value);
     }
     return obj;
   },
@@ -205,8 +206,10 @@ export const CommandContext_ArgumentsEntry: MessageFns<CommandContext_ArgumentsE
     object: I,
   ): CommandContext_ArgumentsEntry {
     const message = createBaseCommandContext_ArgumentsEntry();
-    message.key = object.key ?? "";
-    message.value = object.value ?? "";
+    message.key = object.key ?? 0;
+    message.value = (object.value !== undefined && object.value !== null)
+      ? CommandContextArgument.fromPartial(object.value)
+      : undefined;
     return message;
   },
 };

@@ -1,5 +1,6 @@
 // @@proto-exports-begin
 export * from "./access_check/access_check_operator";
+export * from "./plugin/command_context_argument";
 export * from "./io/handle_chat_command_output";
 export * from "./io/handle_chat_command_input";
 export * from "./database/prepared_statement";
