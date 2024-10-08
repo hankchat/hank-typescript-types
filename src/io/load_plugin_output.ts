@@ -11,17 +11,24 @@ import { Metadata } from "../plugin/metadata";
 /** [Internal] Output from a load plugin request to Hank. */
 export interface LoadPluginOutput {
   /** The metadata returned by the loaded plugin. */
-  metadata: Metadata | undefined;
+  metadata:
+    | Metadata
+    | undefined;
+  /** The plugins extism::Manifest, as JSON. */
+  manifest: string;
 }
 
 function createBaseLoadPluginOutput(): LoadPluginOutput {
-  return { metadata: undefined };
+  return { metadata: undefined, manifest: "" };
 }
 
 export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
   encode(message: LoadPluginOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.metadata !== undefined) {
       Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
+    }
+    if (message.manifest !== "") {
+      writer.uint32(18).string(message.manifest);
     }
     return writer;
   },
@@ -40,6 +47,13 @@ export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
 
           message.metadata = Metadata.decode(reader, reader.uint32());
           continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.manifest = reader.string();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -50,13 +64,19 @@ export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
   },
 
   fromJSON(object: any): LoadPluginOutput {
-    return { metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined };
+    return {
+      metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined,
+      manifest: isSet(object.manifest) ? globalThis.String(object.manifest) : "",
+    };
   },
 
   toJSON(message: LoadPluginOutput): unknown {
     const obj: any = {};
     if (message.metadata !== undefined) {
       obj.metadata = Metadata.toJSON(message.metadata);
+    }
+    if (message.manifest !== "") {
+      obj.manifest = message.manifest;
     }
     return obj;
   },
@@ -69,6 +89,7 @@ export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
     message.metadata = (object.metadata !== undefined && object.metadata !== null)
       ? Metadata.fromPartial(object.metadata)
       : undefined;
+    message.manifest = object.manifest ?? "";
     return message;
   },
 };
