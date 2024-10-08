@@ -1,6 +1,6 @@
 {
   "name": "@hank.chat/types",
-  "version": "0.1.45",
+  "version": "0.1.46",
   "description": "Types for Hank",
   "files": [
     "dist"
