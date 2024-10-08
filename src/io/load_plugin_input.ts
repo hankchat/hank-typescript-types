@@ -9,18 +9,29 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 /** [Internal] Input to a load plugin request to Hank. */
 export interface LoadPluginInput {
-  /** The url to a compiled plugins wasm file to load. */
-  url: string;
+  wasm?:
+    | { $case: "url"; value: string }
+    | { $case: "path"; value: string }
+    | { $case: "bytes"; value: Buffer }
+    | undefined;
 }
 
 function createBaseLoadPluginInput(): LoadPluginInput {
-  return { url: "" };
+  return { wasm: undefined };
 }
 
 export const LoadPluginInput: MessageFns<LoadPluginInput> = {
   encode(message: LoadPluginInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.url !== "") {
-      writer.uint32(10).string(message.url);
+    switch (message.wasm?.$case) {
+      case "url":
+        writer.uint32(10).string(message.wasm.value);
+        break;
+      case "path":
+        writer.uint32(18).string(message.wasm.value);
+        break;
+      case "bytes":
+        writer.uint32(26).bytes(message.wasm.value);
+        break;
     }
     return writer;
   },
@@ -37,7 +48,21 @@ export const LoadPluginInput: MessageFns<LoadPluginInput> = {
             break;
           }
 
-          message.url = reader.string();
+          message.wasm = { $case: "url", value: reader.string() };
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.wasm = { $case: "path", value: reader.string() };
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.wasm = { $case: "bytes", value: Buffer.from(reader.bytes()) };
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -49,13 +74,27 @@ export const LoadPluginInput: MessageFns<LoadPluginInput> = {
   },
 
   fromJSON(object: any): LoadPluginInput {
-    return { url: isSet(object.url) ? globalThis.String(object.url) : "" };
+    return {
+      wasm: isSet(object.url)
+        ? { $case: "url", value: globalThis.String(object.url) }
+        : isSet(object.path)
+        ? { $case: "path", value: globalThis.String(object.path) }
+        : isSet(object.bytes)
+        ? { $case: "bytes", value: Buffer.from(bytesFromBase64(object.bytes)) }
+        : undefined,
+    };
   },
 
   toJSON(message: LoadPluginInput): unknown {
     const obj: any = {};
-    if (message.url !== "") {
-      obj.url = message.url;
+    if (message.wasm?.$case === "url") {
+      obj.url = message.wasm.value;
+    }
+    if (message.wasm?.$case === "path") {
+      obj.path = message.wasm.value;
+    }
+    if (message.wasm?.$case === "bytes") {
+      obj.bytes = base64FromBytes(message.wasm.value);
     }
     return obj;
   },
@@ -65,10 +104,26 @@ export const LoadPluginInput: MessageFns<LoadPluginInput> = {
   },
   fromPartial<I extends Exact<DeepPartial<LoadPluginInput>, I>>(object: I): LoadPluginInput {
     const message = createBaseLoadPluginInput();
-    message.url = object.url ?? "";
+    if (object.wasm?.$case === "url" && object.wasm?.value !== undefined && object.wasm?.value !== null) {
+      message.wasm = { $case: "url", value: object.wasm.value };
+    }
+    if (object.wasm?.$case === "path" && object.wasm?.value !== undefined && object.wasm?.value !== null) {
+      message.wasm = { $case: "path", value: object.wasm.value };
+    }
+    if (object.wasm?.$case === "bytes" && object.wasm?.value !== undefined && object.wasm?.value !== null) {
+      message.wasm = { $case: "bytes", value: object.wasm.value };
+    }
     return message;
   },
 };
+
+function bytesFromBase64(b64: string): Uint8Array {
+  return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
+}
+
+function base64FromBytes(arr: Uint8Array): string {
+  return globalThis.Buffer.from(arr).toString("base64");
+}
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
