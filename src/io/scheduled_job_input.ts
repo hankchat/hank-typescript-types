@@ -6,17 +6,28 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { CronJob } from "../cron/cron_job";
+import { OneShotJob } from "../cron/one_shot_job";
 
 /** [Internal] Input to a InstructionKind::SheduledJob request to Hank. */
 export interface ScheduledJobInput {
+  scheduledJob?: { $case: "cronJob"; value: CronJob } | { $case: "oneShotJob"; value: OneShotJob } | undefined;
 }
 
 function createBaseScheduledJobInput(): ScheduledJobInput {
-  return {};
+  return { scheduledJob: undefined };
 }
 
 export const ScheduledJobInput: MessageFns<ScheduledJobInput> = {
-  encode(_: ScheduledJobInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(message: ScheduledJobInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    switch (message.scheduledJob?.$case) {
+      case "cronJob":
+        CronJob.encode(message.scheduledJob.value, writer.uint32(10).fork()).join();
+        break;
+      case "oneShotJob":
+        OneShotJob.encode(message.scheduledJob.value, writer.uint32(18).fork()).join();
+        break;
+    }
     return writer;
   },
 
@@ -27,6 +38,20 @@ export const ScheduledJobInput: MessageFns<ScheduledJobInput> = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.scheduledJob = { $case: "cronJob", value: CronJob.decode(reader, reader.uint32()) };
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.scheduledJob = { $case: "oneShotJob", value: OneShotJob.decode(reader, reader.uint32()) };
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -36,20 +61,46 @@ export const ScheduledJobInput: MessageFns<ScheduledJobInput> = {
     return message;
   },
 
-  fromJSON(_: any): ScheduledJobInput {
-    return {};
+  fromJSON(object: any): ScheduledJobInput {
+    return {
+      scheduledJob: isSet(object.cronJob)
+        ? { $case: "cronJob", value: CronJob.fromJSON(object.cronJob) }
+        : isSet(object.oneShotJob)
+        ? { $case: "oneShotJob", value: OneShotJob.fromJSON(object.oneShotJob) }
+        : undefined,
+    };
   },
 
-  toJSON(_: ScheduledJobInput): unknown {
+  toJSON(message: ScheduledJobInput): unknown {
     const obj: any = {};
+    if (message.scheduledJob?.$case === "cronJob") {
+      obj.cronJob = CronJob.toJSON(message.scheduledJob.value);
+    }
+    if (message.scheduledJob?.$case === "oneShotJob") {
+      obj.oneShotJob = OneShotJob.toJSON(message.scheduledJob.value);
+    }
     return obj;
   },
 
   create<I extends Exact<DeepPartial<ScheduledJobInput>, I>>(base?: I): ScheduledJobInput {
     return ScheduledJobInput.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ScheduledJobInput>, I>>(_: I): ScheduledJobInput {
+  fromPartial<I extends Exact<DeepPartial<ScheduledJobInput>, I>>(object: I): ScheduledJobInput {
     const message = createBaseScheduledJobInput();
+    if (
+      object.scheduledJob?.$case === "cronJob" &&
+      object.scheduledJob?.value !== undefined &&
+      object.scheduledJob?.value !== null
+    ) {
+      message.scheduledJob = { $case: "cronJob", value: CronJob.fromPartial(object.scheduledJob.value) };
+    }
+    if (
+      object.scheduledJob?.$case === "oneShotJob" &&
+      object.scheduledJob?.value !== undefined &&
+      object.scheduledJob?.value !== null
+    ) {
+      message.scheduledJob = { $case: "oneShotJob", value: OneShotJob.fromPartial(object.scheduledJob.value) };
+    }
     return message;
   },
 };
@@ -66,6 +117,10 @@ type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
+}
 
 interface MessageFns<T> {
   encode(message: T, writer?: BinaryWriter): BinaryWriter;

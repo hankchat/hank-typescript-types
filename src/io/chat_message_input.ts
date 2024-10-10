@@ -6,17 +6,23 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Message } from "../message/message";
 
 /** [Internal] Input to a InstructionKind::ChatMessage request to Hank. */
 export interface ChatMessageInput {
+  /** The chat message. */
+  message: Message | undefined;
 }
 
 function createBaseChatMessageInput(): ChatMessageInput {
-  return {};
+  return { message: undefined };
 }
 
 export const ChatMessageInput: MessageFns<ChatMessageInput> = {
-  encode(_: ChatMessageInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(message: ChatMessageInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.message !== undefined) {
+      Message.encode(message.message, writer.uint32(10).fork()).join();
+    }
     return writer;
   },
 
@@ -27,6 +33,13 @@ export const ChatMessageInput: MessageFns<ChatMessageInput> = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.message = Message.decode(reader, reader.uint32());
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -36,20 +49,26 @@ export const ChatMessageInput: MessageFns<ChatMessageInput> = {
     return message;
   },
 
-  fromJSON(_: any): ChatMessageInput {
-    return {};
+  fromJSON(object: any): ChatMessageInput {
+    return { message: isSet(object.message) ? Message.fromJSON(object.message) : undefined };
   },
 
-  toJSON(_: ChatMessageInput): unknown {
+  toJSON(message: ChatMessageInput): unknown {
     const obj: any = {};
+    if (message.message !== undefined) {
+      obj.message = Message.toJSON(message.message);
+    }
     return obj;
   },
 
   create<I extends Exact<DeepPartial<ChatMessageInput>, I>>(base?: I): ChatMessageInput {
     return ChatMessageInput.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ChatMessageInput>, I>>(_: I): ChatMessageInput {
+  fromPartial<I extends Exact<DeepPartial<ChatMessageInput>, I>>(object: I): ChatMessageInput {
     const message = createBaseChatMessageInput();
+    message.message = (object.message !== undefined && object.message !== null)
+      ? Message.fromPartial(object.message)
+      : undefined;
     return message;
   },
 };
@@ -66,6 +85,10 @@ type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
+}
 
 interface MessageFns<T> {
   encode(message: T, writer?: BinaryWriter): BinaryWriter;

@@ -6,17 +6,31 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Message } from "../message/message";
+import { CommandContext } from "../plugin/command_context";
 
 /** [Internal] Input to a InstructionKind::ChatCommand request to Hank. */
 export interface ChatCommandInput {
+  /** The chat command context to send to Hank. */
+  context:
+    | CommandContext
+    | undefined;
+  /** The message that the chat command originates from. */
+  message: Message | undefined;
 }
 
 function createBaseChatCommandInput(): ChatCommandInput {
-  return {};
+  return { context: undefined, message: undefined };
 }
 
 export const ChatCommandInput: MessageFns<ChatCommandInput> = {
-  encode(_: ChatCommandInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(message: ChatCommandInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.context !== undefined) {
+      CommandContext.encode(message.context, writer.uint32(10).fork()).join();
+    }
+    if (message.message !== undefined) {
+      Message.encode(message.message, writer.uint32(18).fork()).join();
+    }
     return writer;
   },
 
@@ -27,6 +41,20 @@ export const ChatCommandInput: MessageFns<ChatCommandInput> = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.context = CommandContext.decode(reader, reader.uint32());
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = Message.decode(reader, reader.uint32());
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -36,20 +64,35 @@ export const ChatCommandInput: MessageFns<ChatCommandInput> = {
     return message;
   },
 
-  fromJSON(_: any): ChatCommandInput {
-    return {};
+  fromJSON(object: any): ChatCommandInput {
+    return {
+      context: isSet(object.context) ? CommandContext.fromJSON(object.context) : undefined,
+      message: isSet(object.message) ? Message.fromJSON(object.message) : undefined,
+    };
   },
 
-  toJSON(_: ChatCommandInput): unknown {
+  toJSON(message: ChatCommandInput): unknown {
     const obj: any = {};
+    if (message.context !== undefined) {
+      obj.context = CommandContext.toJSON(message.context);
+    }
+    if (message.message !== undefined) {
+      obj.message = Message.toJSON(message.message);
+    }
     return obj;
   },
 
   create<I extends Exact<DeepPartial<ChatCommandInput>, I>>(base?: I): ChatCommandInput {
     return ChatCommandInput.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ChatCommandInput>, I>>(_: I): ChatCommandInput {
+  fromPartial<I extends Exact<DeepPartial<ChatCommandInput>, I>>(object: I): ChatCommandInput {
     const message = createBaseChatCommandInput();
+    message.context = (object.context !== undefined && object.context !== null)
+      ? CommandContext.fromPartial(object.context)
+      : undefined;
+    message.message = (object.message !== undefined && object.message !== null)
+      ? Message.fromPartial(object.message)
+      : undefined;
     return message;
   },
 };
@@ -66,6 +109,10 @@ type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
+}
 
 interface MessageFns<T> {
   encode(message: T, writer?: BinaryWriter): BinaryWriter;
