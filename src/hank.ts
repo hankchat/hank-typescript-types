@@ -6,10 +6,20 @@
 
 /* eslint-disable */
 import { BinaryReader } from "@bufbuild/protobuf/wire";
+import { ChatCommandInput } from "./io/chat_command_input";
+import { ChatCommandOutput } from "./io/chat_command_output";
+import { ChatMessageInput } from "./io/chat_message_input";
+import { ChatMessageOutput } from "./io/chat_message_output";
 import { CronInput } from "./io/cron_input";
 import { CronOutput } from "./io/cron_output";
 import { DbQueryInput } from "./io/db_query_input";
 import { DbQueryOutput } from "./io/db_query_output";
+import { GetMetadataInput } from "./io/get_metadata_input";
+import { GetMetadataOutput } from "./io/get_metadata_output";
+import { InitializeInput } from "./io/initialize_input";
+import { InitializeOutput } from "./io/initialize_output";
+import { InstallInput } from "./io/install_input";
+import { InstallOutput } from "./io/install_output";
 import { LoadPluginInput } from "./io/load_plugin_input";
 import { LoadPluginOutput } from "./io/load_plugin_output";
 import { OneShotInput } from "./io/one_shot_input";
@@ -18,8 +28,12 @@ import { ReactInput } from "./io/react_input";
 import { ReactOutput } from "./io/react_output";
 import { ReloadPluginInput } from "./io/reload_plugin_input";
 import { ReloadPluginOutput } from "./io/reload_plugin_output";
+import { ScheduledJobInput } from "./io/scheduled_job_input";
+import { ScheduledJobOutput } from "./io/scheduled_job_output";
 import { SendMessageInput } from "./io/send_message_input";
 import { SendMessageOutput } from "./io/send_message_output";
+import { ShutdownInput } from "./io/shutdown_input";
+import { ShutdownOutput } from "./io/shutdown_output";
 
 /** [Internal] The underlying core Hank service. Should only be used by internal code. */
 export interface Hank {
@@ -102,6 +116,143 @@ export class HankClientImpl implements Hank {
     const data = LoadPluginInput.encode(request).finish();
     const promise = this.rpc.request(this.service, "load_plugin", data);
     return promise.then((data) => LoadPluginOutput.decode(new BinaryReader(data)));
+  }
+}
+
+/** The underlying interface for a Hank plugin. */
+export interface Plugin {
+  /**
+   * [Internal] Handle InstructionKind::GetMetadata
+   *
+   * This is the first function called after the entry point to retrieve the
+   * plugins metadata.
+   */
+  handle_get_metadata(request: GetMetadataInput): Promise<GetMetadataOutput>;
+  /**
+   * [Internal] Handle InstructionKind::Install
+   *
+   * If the plugin registers an install handler, the plugin service will call
+   * out to it.
+   *
+   * The install function is only called a single time when the plugin is
+   * installed.
+   *
+   * The install function registered by the plugin should be used to create
+   * database tables and other tasks that may only need to happen a single time
+   * in a plugins lifetime.
+   */
+  handle_install(request: InstallInput): Promise<InstallOutput>;
+  /**
+   * [Internal] Handle InstructionKind::Initialize
+   *
+   * If the plugin registers an initialize handler, the plugin service will
+   * call out to it.
+   *
+   * The initialize function registered by the plugin should be used to execute
+   * any functionality that should be run every time the plugin is loaded by
+   * hank, e.g. scheduling jobs, sending a message to a channel, etc.
+   */
+  handle_initialize(request: InitializeInput): Promise<InitializeOutput>;
+  /**
+   * [Internal] Handle InstructionKind::Shutdown
+   *
+   * If the plugin registers a shutdown handler, the plugin service will call
+   * out to it.
+   *
+   * The shutdown function registered by the plugin should be used to execute
+   * any functions necessary to gracefully shut down the plugin.
+   */
+  handle_shutdown(request: ShutdownInput): Promise<ShutdownOutput>;
+  /**
+   * [Internal] Handle InstructionKind::ChatMessage
+   *
+   * If the plugin registers a chat message handler, the plugin service will
+   * call out to it.
+   *
+   * The message handler function registered by the plugin should be used to
+   * execute functionality that functions on general chat messages. Plugins
+   * should prefer registering chat commands in their metadata and using the
+   * chat command handler over custom command parsing implementations.
+   */
+  handle_chat_message(request: ChatMessageInput): Promise<ChatMessageOutput>;
+  /**
+   * [Internal] Handle InstructionKind::ChatCommand
+   *
+   * If the plugin registers a chat command handler, the plugin service will
+   * call out to it.
+   *
+   * The chat command handler function registered by the plugin should be used
+   * to execute custom plugin commands. Plugins can register their commands in
+   * the plugin metadata. See hank.plugin.Metadata for more information.
+   */
+  handle_chat_command(request: ChatCommandInput): Promise<ChatCommandOutput>;
+  /**
+   * [Internal] Handle InstructionKind::ScheduledJob
+   *
+   * If the plugin registers cron or one shot jobs, the plugin service will
+   * receive instruction from hank to execute the scheduled job.
+   *
+   * See your PDK documentation for information on registering cron and one
+   * shot jobs.
+   */
+  handle_scheduled_job(request: ScheduledJobInput): Promise<ScheduledJobOutput>;
+}
+
+export const PluginServiceName = "hank.Plugin";
+export class PluginClientImpl implements Plugin {
+  private readonly rpc: Rpc;
+  private readonly service: string;
+  constructor(rpc: Rpc, opts?: { service?: string }) {
+    this.service = opts?.service || PluginServiceName;
+    this.rpc = rpc;
+    this.handle_get_metadata = this.handle_get_metadata.bind(this);
+    this.handle_install = this.handle_install.bind(this);
+    this.handle_initialize = this.handle_initialize.bind(this);
+    this.handle_shutdown = this.handle_shutdown.bind(this);
+    this.handle_chat_message = this.handle_chat_message.bind(this);
+    this.handle_chat_command = this.handle_chat_command.bind(this);
+    this.handle_scheduled_job = this.handle_scheduled_job.bind(this);
+  }
+  handle_get_metadata(request: GetMetadataInput): Promise<GetMetadataOutput> {
+    const data = GetMetadataInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "handle_get_metadata", data);
+    return promise.then((data) => GetMetadataOutput.decode(new BinaryReader(data)));
+  }
+
+  handle_install(request: InstallInput): Promise<InstallOutput> {
+    const data = InstallInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "handle_install", data);
+    return promise.then((data) => InstallOutput.decode(new BinaryReader(data)));
+  }
+
+  handle_initialize(request: InitializeInput): Promise<InitializeOutput> {
+    const data = InitializeInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "handle_initialize", data);
+    return promise.then((data) => InitializeOutput.decode(new BinaryReader(data)));
+  }
+
+  handle_shutdown(request: ShutdownInput): Promise<ShutdownOutput> {
+    const data = ShutdownInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "handle_shutdown", data);
+    return promise.then((data) => ShutdownOutput.decode(new BinaryReader(data)));
+  }
+
+  handle_chat_message(request: ChatMessageInput): Promise<ChatMessageOutput> {
+    const data = ChatMessageInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "handle_chat_message", data);
+    return promise.then((data) => ChatMessageOutput.decode(new BinaryReader(data)));
+  }
+
+  handle_chat_command(request: ChatCommandInput): Promise<ChatCommandOutput> {
+    const data = ChatCommandInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "handle_chat_command", data);
+    return promise.then((data) => ChatCommandOutput.decode(new BinaryReader(data)));
+  }
+
+  handle_scheduled_job(request: ScheduledJobInput): Promise<ScheduledJobOutput> {
+    const data = ScheduledJobInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "handle_scheduled_job", data);
+    return promise.then((data) => ScheduledJobOutput.decode(new BinaryReader(data)));
   }
 }
 
