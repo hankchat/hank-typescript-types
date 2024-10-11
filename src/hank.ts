@@ -20,6 +20,8 @@ import { InitializeInput } from "./io/initialize_input";
 import { InitializeOutput } from "./io/initialize_output";
 import { InstallInput } from "./io/install_input";
 import { InstallOutput } from "./io/install_output";
+import { InstructPluginInput } from "./io/instruct_plugin_input";
+import { InstructPluginOutput } from "./io/instruct_plugin_output";
 import { LoadPluginInput } from "./io/load_plugin_input";
 import { LoadPluginOutput } from "./io/load_plugin_output";
 import { OneShotInput } from "./io/one_shot_input";
@@ -59,6 +61,12 @@ export interface Hank {
    * Requires EscalatedPrivilege::LOAD_PLUGIN
    */
   load_plugin(request: LoadPluginInput): Promise<LoadPluginOutput>;
+  /**
+   * [Internal] Send an instruct plugin request to hank.
+   *
+   * Requires EscalatedPrivilege::INSTRUCT_PLUGIN
+   */
+  instruct_plugin(request: InstructPluginInput): Promise<InstructPluginOutput>;
 }
 
 export const HankServiceName = "hank.Hank";
@@ -75,6 +83,7 @@ export class HankClientImpl implements Hank {
     this.one_shot = this.one_shot.bind(this);
     this.reload_plugin = this.reload_plugin.bind(this);
     this.load_plugin = this.load_plugin.bind(this);
+    this.instruct_plugin = this.instruct_plugin.bind(this);
   }
   send_message(request: SendMessageInput): Promise<SendMessageOutput> {
     const data = SendMessageInput.encode(request).finish();
@@ -116,6 +125,12 @@ export class HankClientImpl implements Hank {
     const data = LoadPluginInput.encode(request).finish();
     const promise = this.rpc.request(this.service, "load_plugin", data);
     return promise.then((data) => LoadPluginOutput.decode(new BinaryReader(data)));
+  }
+
+  instruct_plugin(request: InstructPluginInput): Promise<InstructPluginOutput> {
+    const data = InstructPluginInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "instruct_plugin", data);
+    return promise.then((data) => InstructPluginOutput.decode(new BinaryReader(data)));
   }
 }
 
