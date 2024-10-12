@@ -36,6 +36,8 @@ import { SendMessageInput } from "./io/send_message_input";
 import { SendMessageOutput } from "./io/send_message_output";
 import { ShutdownInput } from "./io/shutdown_input";
 import { ShutdownOutput } from "./io/shutdown_output";
+import { UnloadPluginInput } from "./io/unload_plugin_input";
+import { UnloadPluginOutput } from "./io/unload_plugin_output";
 
 /** [Internal] The underlying core Hank service. Should only be used by internal code. */
 export interface Hank {
@@ -62,6 +64,12 @@ export interface Hank {
    */
   load_plugin(request: LoadPluginInput): Promise<LoadPluginOutput>;
   /**
+   * [Internal] Send an unload plugin request to hank.
+   *
+   * Requires EscalatedPrivilege::UNLOAD_PLUGIN
+   */
+  unload_plugin(request: UnloadPluginInput): Promise<UnloadPluginOutput>;
+  /**
    * [Internal] Send an instruct plugin request to hank.
    *
    * Requires EscalatedPrivilege::INSTRUCT_PLUGIN
@@ -83,6 +91,7 @@ export class HankClientImpl implements Hank {
     this.one_shot = this.one_shot.bind(this);
     this.reload_plugin = this.reload_plugin.bind(this);
     this.load_plugin = this.load_plugin.bind(this);
+    this.unload_plugin = this.unload_plugin.bind(this);
     this.instruct_plugin = this.instruct_plugin.bind(this);
   }
   send_message(request: SendMessageInput): Promise<SendMessageOutput> {
@@ -125,6 +134,12 @@ export class HankClientImpl implements Hank {
     const data = LoadPluginInput.encode(request).finish();
     const promise = this.rpc.request(this.service, "load_plugin", data);
     return promise.then((data) => LoadPluginOutput.decode(new BinaryReader(data)));
+  }
+
+  unload_plugin(request: UnloadPluginInput): Promise<UnloadPluginOutput> {
+    const data = UnloadPluginInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "unload_plugin", data);
+    return promise.then((data) => UnloadPluginOutput.decode(new BinaryReader(data)));
   }
 
   instruct_plugin(request: InstructPluginInput): Promise<InstructPluginOutput> {
