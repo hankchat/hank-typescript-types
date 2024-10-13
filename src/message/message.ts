@@ -13,13 +13,15 @@ import { User } from "../user/user";
 /** A chat message */
 export interface Message {
   /** The id of a received message */
-  id: string;
-  /** Message timestamp */
-  timestamp:
+  id?:
+    | string
+    | undefined;
+  /** The time the message was sent */
+  timestamp?:
     | Date
     | undefined;
   /** The user who authored the message */
-  author:
+  author?:
     | User
     | undefined;
   /** The channel the message is to/from */
@@ -31,12 +33,12 @@ export interface Message {
 }
 
 function createBaseMessage(): Message {
-  return { id: "", timestamp: undefined, author: undefined, channel: undefined, content: "" };
+  return { id: undefined, timestamp: undefined, author: undefined, channel: undefined, content: "" };
 }
 
 export const Message: MessageFns<Message> = {
   encode(message: Message, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== undefined) {
       writer.uint32(10).string(message.id);
     }
     if (message.timestamp !== undefined) {
@@ -107,7 +109,7 @@ export const Message: MessageFns<Message> = {
 
   fromJSON(object: any): Message {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      id: isSet(object.id) ? globalThis.String(object.id) : undefined,
       timestamp: isSet(object.timestamp) ? fromJsonTimestamp(object.timestamp) : undefined,
       author: isSet(object.author) ? User.fromJSON(object.author) : undefined,
       channel: isSet(object.channel) ? Channel.fromJSON(object.channel) : undefined,
@@ -117,7 +119,7 @@ export const Message: MessageFns<Message> = {
 
   toJSON(message: Message): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== undefined) {
       obj.id = message.id;
     }
     if (message.timestamp !== undefined) {
@@ -140,7 +142,7 @@ export const Message: MessageFns<Message> = {
   },
   fromPartial<I extends Exact<DeepPartial<Message>, I>>(object: I): Message {
     const message = createBaseMessage();
-    message.id = object.id ?? "";
+    message.id = object.id ?? undefined;
     message.timestamp = object.timestamp ?? undefined;
     message.author = (object.author !== undefined && object.author !== null)
       ? User.fromPartial(object.author)
