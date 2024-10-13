@@ -6,38 +6,47 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Channel } from "../channel/channel";
+import { Timestamp } from "../google/protobuf/timestamp";
+import { User } from "../user/user";
 
-/** A chat message. */
+/** A chat message */
 export interface Message {
-  /** The channel id the message is from/to. */
-  channelId: string;
-  /** The id of the received message. */
-  messageId: string;
-  /** The id of the author of the message. */
-  authorId: string;
-  /** The name of the author of the message. */
-  authorName: string;
-  /** The content of the message. */
+  /** The id of a received message */
+  id: string;
+  /** Message timestamp */
+  timestamp:
+    | Date
+    | undefined;
+  /** The user who authored the message */
+  author:
+    | User
+    | undefined;
+  /** The channel the message is to/from */
+  channel:
+    | Channel
+    | undefined;
+  /** The message content */
   content: string;
 }
 
 function createBaseMessage(): Message {
-  return { channelId: "", messageId: "", authorId: "", authorName: "", content: "" };
+  return { id: "", timestamp: undefined, author: undefined, channel: undefined, content: "" };
 }
 
 export const Message: MessageFns<Message> = {
   encode(message: Message, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.channelId !== "") {
-      writer.uint32(10).string(message.channelId);
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
     }
-    if (message.messageId !== "") {
-      writer.uint32(18).string(message.messageId);
+    if (message.timestamp !== undefined) {
+      Timestamp.encode(toTimestamp(message.timestamp), writer.uint32(18).fork()).join();
     }
-    if (message.authorId !== "") {
-      writer.uint32(26).string(message.authorId);
+    if (message.author !== undefined) {
+      User.encode(message.author, writer.uint32(26).fork()).join();
     }
-    if (message.authorName !== "") {
-      writer.uint32(34).string(message.authorName);
+    if (message.channel !== undefined) {
+      Channel.encode(message.channel, writer.uint32(34).fork()).join();
     }
     if (message.content !== "") {
       writer.uint32(42).string(message.content);
@@ -57,28 +66,28 @@ export const Message: MessageFns<Message> = {
             break;
           }
 
-          message.channelId = reader.string();
+          message.id = reader.string();
           continue;
         case 2:
           if (tag !== 18) {
             break;
           }
 
-          message.messageId = reader.string();
+          message.timestamp = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           continue;
         case 3:
           if (tag !== 26) {
             break;
           }
 
-          message.authorId = reader.string();
+          message.author = User.decode(reader, reader.uint32());
           continue;
         case 4:
           if (tag !== 34) {
             break;
           }
 
-          message.authorName = reader.string();
+          message.channel = Channel.decode(reader, reader.uint32());
           continue;
         case 5:
           if (tag !== 42) {
@@ -98,27 +107,27 @@ export const Message: MessageFns<Message> = {
 
   fromJSON(object: any): Message {
     return {
-      channelId: isSet(object.channelId) ? globalThis.String(object.channelId) : "",
-      messageId: isSet(object.messageId) ? globalThis.String(object.messageId) : "",
-      authorId: isSet(object.authorId) ? globalThis.String(object.authorId) : "",
-      authorName: isSet(object.authorName) ? globalThis.String(object.authorName) : "",
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      timestamp: isSet(object.timestamp) ? fromJsonTimestamp(object.timestamp) : undefined,
+      author: isSet(object.author) ? User.fromJSON(object.author) : undefined,
+      channel: isSet(object.channel) ? Channel.fromJSON(object.channel) : undefined,
       content: isSet(object.content) ? globalThis.String(object.content) : "",
     };
   },
 
   toJSON(message: Message): unknown {
     const obj: any = {};
-    if (message.channelId !== "") {
-      obj.channelId = message.channelId;
+    if (message.id !== "") {
+      obj.id = message.id;
     }
-    if (message.messageId !== "") {
-      obj.messageId = message.messageId;
+    if (message.timestamp !== undefined) {
+      obj.timestamp = message.timestamp.toISOString();
     }
-    if (message.authorId !== "") {
-      obj.authorId = message.authorId;
+    if (message.author !== undefined) {
+      obj.author = User.toJSON(message.author);
     }
-    if (message.authorName !== "") {
-      obj.authorName = message.authorName;
+    if (message.channel !== undefined) {
+      obj.channel = Channel.toJSON(message.channel);
     }
     if (message.content !== "") {
       obj.content = message.content;
@@ -131,10 +140,14 @@ export const Message: MessageFns<Message> = {
   },
   fromPartial<I extends Exact<DeepPartial<Message>, I>>(object: I): Message {
     const message = createBaseMessage();
-    message.channelId = object.channelId ?? "";
-    message.messageId = object.messageId ?? "";
-    message.authorId = object.authorId ?? "";
-    message.authorName = object.authorName ?? "";
+    message.id = object.id ?? "";
+    message.timestamp = object.timestamp ?? undefined;
+    message.author = (object.author !== undefined && object.author !== null)
+      ? User.fromPartial(object.author)
+      : undefined;
+    message.channel = (object.channel !== undefined && object.channel !== null)
+      ? Channel.fromPartial(object.channel)
+      : undefined;
     message.content = object.content ?? "";
     return message;
   },
@@ -152,6 +165,28 @@ type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function toTimestamp(date: Date): Timestamp {
+  const seconds = Math.trunc(date.getTime() / 1_000);
+  const nanos = (date.getTime() % 1_000) * 1_000_000;
+  return { seconds, nanos };
+}
+
+function fromTimestamp(t: Timestamp): Date {
+  let millis = (t.seconds || 0) * 1_000;
+  millis += (t.nanos || 0) / 1_000_000;
+  return new globalThis.Date(millis);
+}
+
+function fromJsonTimestamp(o: any): Date {
+  if (o instanceof globalThis.Date) {
+    return o;
+  } else if (typeof o === "string") {
+    return new globalThis.Date(o);
+  } else {
+    return fromTimestamp(Timestamp.fromJSON(o));
+  }
+}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
