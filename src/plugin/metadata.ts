@@ -64,7 +64,15 @@ export interface Metadata {
   /** Hosts that this plugin requests permissions to access via HTTP. */
   allowedHosts: string[];
   /** Pool size this plugin requests. */
-  poolSize?: number | undefined;
+  poolSize?:
+    | number
+    | undefined;
+  /**
+   * Show help if no args are passed to the plugin command.
+   *
+   * NOTE: Subcommands count as arguments.
+   */
+  argRequiredElseHelp: boolean;
 }
 
 function createBaseMetadata(): Metadata {
@@ -85,6 +93,7 @@ function createBaseMetadata(): Metadata {
     subcommands: [],
     allowedHosts: [],
     poolSize: undefined,
+    argRequiredElseHelp: false,
   };
 }
 
@@ -139,6 +148,9 @@ export const Metadata: MessageFns<Metadata> = {
     }
     if (message.poolSize !== undefined) {
       writer.uint32(128).int32(message.poolSize);
+    }
+    if (message.argRequiredElseHelp !== false) {
+      writer.uint32(136).bool(message.argRequiredElseHelp);
     }
     return writer;
   },
@@ -272,6 +284,13 @@ export const Metadata: MessageFns<Metadata> = {
 
           message.poolSize = reader.int32();
           continue;
+        case 17:
+          if (tag !== 136) {
+            break;
+          }
+
+          message.argRequiredElseHelp = reader.bool();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -307,6 +326,7 @@ export const Metadata: MessageFns<Metadata> = {
         ? object.allowedHosts.map((e: any) => globalThis.String(e))
         : [],
       poolSize: isSet(object.poolSize) ? globalThis.Number(object.poolSize) : undefined,
+      argRequiredElseHelp: isSet(object.argRequiredElseHelp) ? globalThis.Boolean(object.argRequiredElseHelp) : false,
     };
   },
 
@@ -360,6 +380,9 @@ export const Metadata: MessageFns<Metadata> = {
     if (message.poolSize !== undefined) {
       obj.poolSize = Math.round(message.poolSize);
     }
+    if (message.argRequiredElseHelp !== false) {
+      obj.argRequiredElseHelp = message.argRequiredElseHelp;
+    }
     return obj;
   },
 
@@ -386,6 +409,7 @@ export const Metadata: MessageFns<Metadata> = {
     message.subcommands = object.subcommands?.map((e) => Command.fromPartial(e)) || [];
     message.allowedHosts = object.allowedHosts?.map((e) => e) || [];
     message.poolSize = object.poolSize ?? undefined;
+    message.argRequiredElseHelp = object.argRequiredElseHelp ?? false;
     return message;
   },
 };
