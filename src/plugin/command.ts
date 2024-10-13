@@ -38,7 +38,15 @@ export interface Command {
    *
    * This command can optionally be gated by access checks.
    */
-  accessChecks?: AccessCheckChain | undefined;
+  accessChecks?:
+    | AccessCheckChain
+    | undefined;
+  /**
+   * Show help if no args are passed to this command.
+   *
+   * NOTE: Subcommands count as arguments.
+   */
+  argRequiredElseHelp: boolean;
 }
 
 function createBaseCommand(): Command {
@@ -51,6 +59,7 @@ function createBaseCommand(): Command {
     arguments: [],
     subcommands: [],
     accessChecks: undefined,
+    argRequiredElseHelp: false,
   };
 }
 
@@ -79,6 +88,9 @@ export const Command: MessageFns<Command> = {
     }
     if (message.accessChecks !== undefined) {
       AccessCheckChain.encode(message.accessChecks, writer.uint32(66).fork()).join();
+    }
+    if (message.argRequiredElseHelp !== false) {
+      writer.uint32(72).bool(message.argRequiredElseHelp);
     }
     return writer;
   },
@@ -146,6 +158,13 @@ export const Command: MessageFns<Command> = {
 
           message.accessChecks = AccessCheckChain.decode(reader, reader.uint32());
           continue;
+        case 9:
+          if (tag !== 72) {
+            break;
+          }
+
+          message.argRequiredElseHelp = reader.bool();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -169,6 +188,7 @@ export const Command: MessageFns<Command> = {
         ? object.subcommands.map((e: any) => Command.fromJSON(e))
         : [],
       accessChecks: isSet(object.accessChecks) ? AccessCheckChain.fromJSON(object.accessChecks) : undefined,
+      argRequiredElseHelp: isSet(object.argRequiredElseHelp) ? globalThis.Boolean(object.argRequiredElseHelp) : false,
     };
   },
 
@@ -198,6 +218,9 @@ export const Command: MessageFns<Command> = {
     if (message.accessChecks !== undefined) {
       obj.accessChecks = AccessCheckChain.toJSON(message.accessChecks);
     }
+    if (message.argRequiredElseHelp !== false) {
+      obj.argRequiredElseHelp = message.argRequiredElseHelp;
+    }
     return obj;
   },
 
@@ -216,6 +239,7 @@ export const Command: MessageFns<Command> = {
     message.accessChecks = (object.accessChecks !== undefined && object.accessChecks !== null)
       ? AccessCheckChain.fromPartial(object.accessChecks)
       : undefined;
+    message.argRequiredElseHelp = object.argRequiredElseHelp ?? false;
     return message;
   },
 };
