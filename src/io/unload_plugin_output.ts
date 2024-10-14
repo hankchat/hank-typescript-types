@@ -9,14 +9,19 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 /** [Internal] Output from an unload plugin request to Hank. */
 export interface UnloadPluginOutput {
+  /** An error message, if there was an error. */
+  error?: string | undefined;
 }
 
 function createBaseUnloadPluginOutput(): UnloadPluginOutput {
-  return {};
+  return { error: undefined };
 }
 
 export const UnloadPluginOutput: MessageFns<UnloadPluginOutput> = {
-  encode(_: UnloadPluginOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(message: UnloadPluginOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.error !== undefined) {
+      writer.uint32(10).string(message.error);
+    }
     return writer;
   },
 
@@ -27,6 +32,13 @@ export const UnloadPluginOutput: MessageFns<UnloadPluginOutput> = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.error = reader.string();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -36,20 +48,24 @@ export const UnloadPluginOutput: MessageFns<UnloadPluginOutput> = {
     return message;
   },
 
-  fromJSON(_: any): UnloadPluginOutput {
-    return {};
+  fromJSON(object: any): UnloadPluginOutput {
+    return { error: isSet(object.error) ? globalThis.String(object.error) : undefined };
   },
 
-  toJSON(_: UnloadPluginOutput): unknown {
+  toJSON(message: UnloadPluginOutput): unknown {
     const obj: any = {};
+    if (message.error !== undefined) {
+      obj.error = message.error;
+    }
     return obj;
   },
 
   create<I extends Exact<DeepPartial<UnloadPluginOutput>, I>>(base?: I): UnloadPluginOutput {
     return UnloadPluginOutput.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<UnloadPluginOutput>, I>>(_: I): UnloadPluginOutput {
+  fromPartial<I extends Exact<DeepPartial<UnloadPluginOutput>, I>>(object: I): UnloadPluginOutput {
     const message = createBaseUnloadPluginOutput();
+    message.error = object.error ?? undefined;
     return message;
   },
 };
@@ -66,6 +82,10 @@ type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
+}
 
 interface MessageFns<T> {
   encode(message: T, writer?: BinaryWriter): BinaryWriter;

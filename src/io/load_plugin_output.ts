@@ -16,10 +16,12 @@ export interface LoadPluginOutput {
     | undefined;
   /** The plugins extism::Manifest, as JSON. */
   manifest: string;
+  /** An error message, if there was an error. */
+  error?: string | undefined;
 }
 
 function createBaseLoadPluginOutput(): LoadPluginOutput {
-  return { metadata: undefined, manifest: "" };
+  return { metadata: undefined, manifest: "", error: undefined };
 }
 
 export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
@@ -29,6 +31,9 @@ export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
     }
     if (message.manifest !== "") {
       writer.uint32(18).string(message.manifest);
+    }
+    if (message.error !== undefined) {
+      writer.uint32(26).string(message.error);
     }
     return writer;
   },
@@ -54,6 +59,13 @@ export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
 
           message.manifest = reader.string();
           continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.error = reader.string();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -67,6 +79,7 @@ export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
     return {
       metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined,
       manifest: isSet(object.manifest) ? globalThis.String(object.manifest) : "",
+      error: isSet(object.error) ? globalThis.String(object.error) : undefined,
     };
   },
 
@@ -77,6 +90,9 @@ export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
     }
     if (message.manifest !== "") {
       obj.manifest = message.manifest;
+    }
+    if (message.error !== undefined) {
+      obj.error = message.error;
     }
     return obj;
   },
@@ -90,6 +106,7 @@ export const LoadPluginOutput: MessageFns<LoadPluginOutput> = {
       ? Metadata.fromPartial(object.metadata)
       : undefined;
     message.manifest = object.manifest ?? "";
+    message.error = object.error ?? undefined;
     return message;
   },
 };

@@ -9,14 +9,19 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 /** [Internal] Output from a one shot request to Hank. */
 export interface OneShotOutput {
+  /** An error message, if there was an error. */
+  error?: string | undefined;
 }
 
 function createBaseOneShotOutput(): OneShotOutput {
-  return {};
+  return { error: undefined };
 }
 
 export const OneShotOutput: MessageFns<OneShotOutput> = {
-  encode(_: OneShotOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(message: OneShotOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.error !== undefined) {
+      writer.uint32(10).string(message.error);
+    }
     return writer;
   },
 
@@ -27,6 +32,13 @@ export const OneShotOutput: MessageFns<OneShotOutput> = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.error = reader.string();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -36,20 +48,24 @@ export const OneShotOutput: MessageFns<OneShotOutput> = {
     return message;
   },
 
-  fromJSON(_: any): OneShotOutput {
-    return {};
+  fromJSON(object: any): OneShotOutput {
+    return { error: isSet(object.error) ? globalThis.String(object.error) : undefined };
   },
 
-  toJSON(_: OneShotOutput): unknown {
+  toJSON(message: OneShotOutput): unknown {
     const obj: any = {};
+    if (message.error !== undefined) {
+      obj.error = message.error;
+    }
     return obj;
   },
 
   create<I extends Exact<DeepPartial<OneShotOutput>, I>>(base?: I): OneShotOutput {
     return OneShotOutput.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<OneShotOutput>, I>>(_: I): OneShotOutput {
+  fromPartial<I extends Exact<DeepPartial<OneShotOutput>, I>>(object: I): OneShotOutput {
     const message = createBaseOneShotOutput();
+    message.error = object.error ?? undefined;
     return message;
   },
 };
@@ -66,6 +82,10 @@ type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
+}
 
 interface MessageFns<T> {
   encode(message: T, writer?: BinaryWriter): BinaryWriter;
