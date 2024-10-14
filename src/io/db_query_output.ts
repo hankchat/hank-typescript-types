@@ -11,17 +11,24 @@ import { Results } from "../database/results";
 /** [Internal] Output from a db query request to Hank. */
 export interface DbQueryOutput {
   /** The database results from the query from Hank. */
-  results: Results | undefined;
+  results:
+    | Results
+    | undefined;
+  /** An error message, if there was an error. */
+  error?: string | undefined;
 }
 
 function createBaseDbQueryOutput(): DbQueryOutput {
-  return { results: undefined };
+  return { results: undefined, error: undefined };
 }
 
 export const DbQueryOutput: MessageFns<DbQueryOutput> = {
   encode(message: DbQueryOutput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.results !== undefined) {
       Results.encode(message.results, writer.uint32(10).fork()).join();
+    }
+    if (message.error !== undefined) {
+      writer.uint32(18).string(message.error);
     }
     return writer;
   },
@@ -40,6 +47,13 @@ export const DbQueryOutput: MessageFns<DbQueryOutput> = {
 
           message.results = Results.decode(reader, reader.uint32());
           continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.error = reader.string();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -50,13 +64,19 @@ export const DbQueryOutput: MessageFns<DbQueryOutput> = {
   },
 
   fromJSON(object: any): DbQueryOutput {
-    return { results: isSet(object.results) ? Results.fromJSON(object.results) : undefined };
+    return {
+      results: isSet(object.results) ? Results.fromJSON(object.results) : undefined,
+      error: isSet(object.error) ? globalThis.String(object.error) : undefined,
+    };
   },
 
   toJSON(message: DbQueryOutput): unknown {
     const obj: any = {};
     if (message.results !== undefined) {
       obj.results = Results.toJSON(message.results);
+    }
+    if (message.error !== undefined) {
+      obj.error = message.error;
     }
     return obj;
   },
@@ -69,6 +89,7 @@ export const DbQueryOutput: MessageFns<DbQueryOutput> = {
     message.results = (object.results !== undefined && object.results !== null)
       ? Results.fromPartial(object.results)
       : undefined;
+    message.error = object.error ?? undefined;
     return message;
   },
 };
