@@ -11,16 +11,25 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 export interface UnloadPluginInput {
   /** The plugin to unload. */
   plugin: string;
+  /**
+   * Whether or not hank should clean up any plugin assets, e.g. database file.
+   * This should be set to true if this plugin is being unloaded as a result
+   * of an uninstall command.
+   */
+  cleanup: boolean;
 }
 
 function createBaseUnloadPluginInput(): UnloadPluginInput {
-  return { plugin: "" };
+  return { plugin: "", cleanup: false };
 }
 
 export const UnloadPluginInput: MessageFns<UnloadPluginInput> = {
   encode(message: UnloadPluginInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.plugin !== "") {
       writer.uint32(10).string(message.plugin);
+    }
+    if (message.cleanup !== false) {
+      writer.uint32(16).bool(message.cleanup);
     }
     return writer;
   },
@@ -39,6 +48,13 @@ export const UnloadPluginInput: MessageFns<UnloadPluginInput> = {
 
           message.plugin = reader.string();
           continue;
+        case 2:
+          if (tag !== 16) {
+            break;
+          }
+
+          message.cleanup = reader.bool();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -49,13 +65,19 @@ export const UnloadPluginInput: MessageFns<UnloadPluginInput> = {
   },
 
   fromJSON(object: any): UnloadPluginInput {
-    return { plugin: isSet(object.plugin) ? globalThis.String(object.plugin) : "" };
+    return {
+      plugin: isSet(object.plugin) ? globalThis.String(object.plugin) : "",
+      cleanup: isSet(object.cleanup) ? globalThis.Boolean(object.cleanup) : false,
+    };
   },
 
   toJSON(message: UnloadPluginInput): unknown {
     const obj: any = {};
     if (message.plugin !== "") {
       obj.plugin = message.plugin;
+    }
+    if (message.cleanup !== false) {
+      obj.cleanup = message.cleanup;
     }
     return obj;
   },
@@ -66,6 +88,7 @@ export const UnloadPluginInput: MessageFns<UnloadPluginInput> = {
   fromPartial<I extends Exact<DeepPartial<UnloadPluginInput>, I>>(object: I): UnloadPluginInput {
     const message = createBaseUnloadPluginInput();
     message.plugin = object.plugin ?? "";
+    message.cleanup = object.cleanup ?? false;
     return message;
   },
 };
