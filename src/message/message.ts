@@ -16,7 +16,7 @@ export interface Message {
   id?:
     | string
     | undefined;
-  /** The time the message was sent */
+  /** The UTC epoch time the message was sent */
   timestamp?:
     | Date
     | undefined;

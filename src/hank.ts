@@ -12,6 +12,8 @@ import { ChatMessageInput } from "./io/chat_message_input";
 import { ChatMessageOutput } from "./io/chat_message_output";
 import { CronInput } from "./io/cron_input";
 import { CronOutput } from "./io/cron_output";
+import { DatetimeInput } from "./io/datetime_input";
+import { DatetimeOutput } from "./io/datetime_output";
 import { DbQueryInput } from "./io/db_query_input";
 import { DbQueryOutput } from "./io/db_query_output";
 import { GetMetadataInput } from "./io/get_metadata_input";
@@ -51,6 +53,8 @@ export interface Hank {
   cron(request: CronInput): Promise<CronOutput>;
   /** [Internal] Send a one shot job to hank. */
   one_shot(request: OneShotInput): Promise<OneShotOutput>;
+  /** [Internal] Get the current local datetime from hank. */
+  datetime(request: DatetimeInput): Promise<DatetimeOutput>;
   /**
    * [Internal] Send a reload plugin request to hank.
    *
@@ -89,6 +93,7 @@ export class HankClientImpl implements Hank {
     this.db_query = this.db_query.bind(this);
     this.cron = this.cron.bind(this);
     this.one_shot = this.one_shot.bind(this);
+    this.datetime = this.datetime.bind(this);
     this.reload_plugin = this.reload_plugin.bind(this);
     this.load_plugin = this.load_plugin.bind(this);
     this.unload_plugin = this.unload_plugin.bind(this);
@@ -122,6 +127,12 @@ export class HankClientImpl implements Hank {
     const data = OneShotInput.encode(request).finish();
     const promise = this.rpc.request(this.service, "one_shot", data);
     return promise.then((data) => OneShotOutput.decode(new BinaryReader(data)));
+  }
+
+  datetime(request: DatetimeInput): Promise<DatetimeOutput> {
+    const data = DatetimeInput.encode(request).finish();
+    const promise = this.rpc.request(this.service, "datetime", data);
+    return promise.then((data) => DatetimeOutput.decode(new BinaryReader(data)));
   }
 
   reload_plugin(request: ReloadPluginInput): Promise<ReloadPluginOutput> {
